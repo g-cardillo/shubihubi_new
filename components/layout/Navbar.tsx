@@ -53,6 +53,29 @@ const LINKS: NavLink[] = [
 
 const SUBPAGE_HREFS = ['/live-painting', '/stationery'];
 
+/**
+ * Comportamento navbar al variare della rotta (parità col Flutter
+ * `NavigationMenu`):
+ *  - `'overlayScroll'` (Home): navbar in overlay sull'hero, sfondo
+ *    trasparente → bianco e testo bianco → scuro in base allo scroll.
+ *  - `'overlayDark'` (Gallery, About, Live Painting, Stationery): overlay con
+ *    sfondo trasparente → bianco a scroll, ma testo SEMPRE scuro.
+ *  - `'solid'` (Shop, Contacts e tutto il resto): sfondo bianco fisso, testo
+ *    scuro. (`Events` nel Flutter è scroll-based, ma qui è ancora uno stub
+ *    senza hero → resta solido per non avere testo bianco su bianco.)
+ */
+const OVERLAY_DARK_TEXT = ['/gallery', '/about', '/live-painting', '/stationery'];
+/** Distanza di scroll (px) per il fade completo, come `fadeDistance` Flutter. */
+const NAV_FADE = 160;
+
+type NavMode = 'solid' | 'overlayDark' | 'overlayScroll';
+
+function navModeFor(pathname: string): NavMode {
+  if (pathname === '/') return 'overlayScroll';
+  if (OVERLAY_DARK_TEXT.includes(pathname)) return 'overlayDark';
+  return 'solid';
+}
+
 export function Navbar() {
   const t = useTranslations('nav');
   const pathname = usePathname();
@@ -63,6 +86,35 @@ export function Navbar() {
   const toggleCart = useCartStore((s) => s.toggle);
   const hydrated = useCartStore((s) => s.hydrated);
   const count = useCartStore((s) => totalQty(s.items));
+
+  // Modalità navbar in base alla rotta + progressione di scroll [0..1].
+  const mode = navModeFor(pathname);
+  const overlay = mode !== 'solid';
+  const scrollText = mode === 'overlayScroll';
+  const [scrollT, setScrollT] = useState(0);
+
+  useEffect(() => {
+    if (!overlay) {
+      setScrollT(0);
+      return;
+    }
+    const onScroll = () =>
+      setScrollT(Math.min(1, Math.max(0, window.scrollY / NAV_FADE)));
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [overlay, pathname]);
+
+  // A menu aperto la riga è sempre piena (bianca) per accordarsi col pannello.
+  const bgAlpha = overlay ? (menuOpen ? 1 : scrollT) : 1;
+  // Testo: scuro fisso, oppure (Home) interpolato bianco → ink in base a `scrollT`.
+  const lerp = (from: number, to: number) =>
+    Math.round(from + (to - from) * scrollT);
+  const fgColor = scrollText
+    ? menuOpen
+      ? 'rgb(29, 29, 31)'
+      : `rgb(${lerp(255, 29)}, ${lerp(255, 29)}, ${lerp(255, 31)})`
+    : undefined;
 
   // Chiude il menu mobile a ogni cambio rotta.
   useEffect(() => {
@@ -77,7 +129,22 @@ export function Navbar() {
   const homeGroupActive = pathname === '/' || SUBPAGE_HREFS.includes(pathname);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-neutral-100 bg-white">
+    <header
+      className={
+        overlay
+          ? `fixed inset-x-0 top-0 z-40${scrollText ? '' : ' text-ink'}`
+          : 'sticky top-0 z-40 border-b border-neutral-100 bg-white text-ink'
+      }
+      style={
+        overlay
+          ? {
+              backgroundColor: `rgba(255, 255, 255, ${bgAlpha})`,
+              borderBottom: `1px solid rgba(229, 229, 229, ${bgAlpha})`,
+              color: fgColor,
+            }
+          : undefined
+      }
+    >
       <nav className="mx-auto flex h-16 max-w-content items-center gap-4 px-4 desk:px-6">
         {/* Hamburger (mobile) */}
         <button
@@ -85,7 +152,7 @@ export function Navbar() {
           onClick={() => setMenuOpen((o) => !o)}
           aria-label="Menu"
           aria-expanded={menuOpen}
-          className="-ml-1 flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-neutral-100 desk:hidden"
+          className="-ml-1 flex h-10 w-10 items-center justify-center rounded-full hover:bg-neutral-100 desk:hidden"
         >
           {menuOpen ? <CloseGlyph /> : <MenuGlyph />}
         </button>
@@ -118,7 +185,7 @@ export function Navbar() {
                 className={`rounded-full px-3 py-2 text-[15px] transition-colors ${
                   isActive(l.href)
                     ? 'font-semibold text-brand-pink'
-                    : 'font-normal text-ink hover:text-brand-pink'
+                    : 'font-normal hover:text-brand-pink'
                 }`}
               >
                 {t(l.key)}
@@ -136,7 +203,7 @@ export function Navbar() {
               href="/admin"
               aria-label="Admin"
               title="Admin Panel"
-              className="flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-neutral-100"
+              className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-neutral-100"
             >
               <IconAdmin className="h-[22px] w-[22px]" />
             </Link>
@@ -145,7 +212,7 @@ export function Navbar() {
           <Link
             href="/profile"
             aria-label={t('profile')}
-            className="flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-neutral-100"
+            className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-neutral-100"
           >
             <IconProfile className="h-[22px] w-[22px]" />
           </Link>
@@ -154,7 +221,7 @@ export function Navbar() {
             type="button"
             onClick={toggleCart}
             aria-label={t('cart')}
-            className="relative flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-neutral-100"
+            className="relative flex h-10 w-10 items-center justify-center rounded-full hover:bg-neutral-100"
           >
             <IconCart className="h-[22px] w-[22px]" />
             {hydrated && count > 0 && (
@@ -261,7 +328,7 @@ function HomeDropdown({
       <Link
         href="/"
         className={`flex items-center gap-0.5 rounded-full px-3 py-2 text-[15px] transition-colors ${
-          active ? 'font-semibold text-brand-pink' : 'font-normal text-ink hover:text-brand-pink'
+          active ? 'font-semibold text-brand-pink' : 'font-normal hover:text-brand-pink'
         }`}
       >
         {label}
@@ -323,8 +390,8 @@ function LangSwitcher() {
       className="flex h-10 items-center gap-0.5 rounded-full px-2 text-base hover:bg-neutral-100"
     >
       <span aria-hidden>{locale === 'it' ? '🇮🇹' : '🇬🇧'}</span>
-      <span className="text-xs font-semibold text-ink">{locale.toUpperCase()}</span>
-      <IconCaret className="h-4 w-4 text-ink" />
+      <span className="text-xs font-semibold">{locale.toUpperCase()}</span>
+      <IconCaret className="h-4 w-4" />
     </button>
   );
 }
