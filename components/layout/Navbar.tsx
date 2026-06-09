@@ -87,8 +87,24 @@ export function Navbar() {
   const hydrated = useCartStore((s) => s.hydrated);
   const count = useCartStore((s) => totalQty(s.items));
 
+  // Schermo piccolo (< breakpoint `desk` = 900px).
+  const [compact, setCompact] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 899.98px)');
+    const update = () => setCompact(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
+
   // Modalità navbar in base alla rotta + progressione di scroll [0..1].
-  const mode = navModeFor(pathname);
+  // Eccezione: su schermo piccolo Live Painting e Stationery hanno la barra
+  // sempre bianca (solid), non l'overlay trasparente.
+  const baseMode = navModeFor(pathname);
+  const mode: NavMode =
+    compact && (pathname === '/live-painting' || pathname === '/stationery')
+      ? 'solid'
+      : baseMode;
   const overlay = mode !== 'solid';
   const scrollText = mode === 'overlayScroll';
   const [scrollT, setScrollT] = useState(0);
@@ -241,32 +257,23 @@ export function Navbar() {
             if (l.children) {
               return (
                 <div key={l.href}>
-                  <div
-                    className={`flex items-center rounded-lg ${
-                      homeGroupActive ? 'text-brand-pink' : 'text-ink'
+                  {/* L'intera riga "Home" apre/chiude il sottomenù (come la
+                      ExpansionTile del drawer Flutter). La voce Home vera e
+                      propria è la prima del sottomenù. */}
+                  <button
+                    type="button"
+                    onClick={() => setHomeExpanded((o) => !o)}
+                    aria-expanded={homeExpanded}
+                    className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-base ${
+                      homeGroupActive ? 'font-semibold text-brand-pink' : 'text-ink'
                     }`}
                   >
-                    <Link
-                      href={l.href}
-                      className={`flex flex-1 items-center gap-3 px-3 py-3 text-base ${
-                        homeGroupActive ? 'font-semibold' : ''
-                      }`}
-                    >
-                      <Icon className="h-[22px] w-[22px]" />
-                      {t(l.key)}
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={() => setHomeExpanded((o) => !o)}
-                      aria-label={t(l.key)}
-                      aria-expanded={homeExpanded}
-                      className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-neutral-100"
-                    >
-                      <IconCaret
-                        className={`h-5 w-5 transition-transform ${homeExpanded ? 'rotate-180' : ''}`}
-                      />
-                    </button>
-                  </div>
+                    <Icon className="h-[22px] w-[22px]" />
+                    {t(l.key)}
+                    <IconCaret
+                      className={`ml-auto h-5 w-5 transition-transform ${homeExpanded ? 'rotate-180' : ''}`}
+                    />
+                  </button>
                   {homeExpanded && (
                     <div className="mb-1 ml-[34px] border-l border-neutral-100 pl-2">
                       {l.children.map((c) => (
@@ -322,26 +329,44 @@ function HomeDropdown({
 }) {
   const pathname = usePathname();
   const isActive = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href));
+  const [open, setOpen] = useState(false);
+
+  // Si chiude dopo un click che cambia rotta (oltre che on click esplicito).
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
 
   return (
-    <div className="group relative">
+    <div
+      className="relative"
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
       <Link
         href="/"
+        onClick={() => setOpen(false)}
         className={`flex items-center gap-0.5 rounded-full px-3 py-2 text-[15px] transition-colors ${
           active ? 'font-semibold text-brand-pink' : 'font-normal hover:text-brand-pink'
         }`}
       >
         {label}
-        <IconCaret className="h-4 w-4 transition-transform group-hover:rotate-180" />
+        <IconCaret
+          className={`h-4 w-4 transition-transform ${open ? 'rotate-180' : ''}`}
+        />
       </Link>
 
       {/* pt-2 fa da ponte sul gap, così l'hover non si interrompe. */}
-      <div className="invisible absolute left-1/2 top-full z-50 min-w-[190px] -translate-x-1/2 pt-2 opacity-0 transition-opacity duration-150 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+      <div
+        className={`absolute left-1/2 top-full z-50 min-w-[190px] -translate-x-1/2 pt-2 transition-opacity duration-150 ${
+          open ? 'visible opacity-100' : 'invisible opacity-0'
+        }`}
+      >
         <ul className="overflow-hidden rounded-xl border border-neutral-100 bg-white py-1 shadow-lg">
           {items.map((c) => (
             <li key={c.href}>
               <Link
                 href={c.href}
+                onClick={() => setOpen(false)}
                 className={`block px-5 py-2.5 text-[15px] transition-colors ${
                   isActive(c.href)
                     ? 'font-semibold text-brand-pink'
