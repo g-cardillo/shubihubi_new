@@ -1,8 +1,33 @@
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import type { Locale } from '@/i18n/routing';
-import { SITE } from '@/lib/site';
-import { RichText } from '@/components/content/RichText';
+import { ContactForm } from '@/components/contact/ContactForm';
+
+const SUPPORT_EMAIL = 'support@shubihubi.com';
+
+// Gruppi FAQ — mappatura fedele a ContactsView.dart.
+const GROUPS: Array<{ titleKey: string; questions: Array<[string, string]> }> = [
+  {
+    titleKey: 'faq_title',
+    questions: Array.from({ length: 8 }, (_, i) => [`faq_q${i + 1}`, `faq_a${i + 1}`] as [string, string]),
+  },
+  {
+    titleKey: 'shop_title',
+    questions: [
+      ...Array.from({ length: 4 }, (_, i) => [`shop_q${i + 1}`, `shop_a${i + 1}`] as [string, string]),
+      ['faq_q9', 'faq_a9'],
+    ],
+  },
+  {
+    titleKey: 'ship_title',
+    questions: Array.from({ length: 8 }, (_, i) => [`ship_q${i + 1}`, `ship_a${i + 1}`] as [string, string]),
+  },
+  {
+    titleKey: 'orders_title',
+    questions: Array.from({ length: 8 }, (_, i) => [`orders_q${i + 1}`, `orders_a${i + 1}`] as [string, string]),
+  },
+];
 
 export async function generateMetadata({
   params,
@@ -14,14 +39,6 @@ export async function generateMetadata({
   return { title: t('contacts') };
 }
 
-// Gruppi FAQ con relativo numero di domande (cfr. ContactsView.dart).
-const GROUPS = [
-  { titleKey: 'faq_title', prefix: 'faq', count: 9 },
-  { titleKey: 'shop_title', prefix: 'shop', count: 4 },
-  { titleKey: 'ship_title', prefix: 'ship', count: 8 },
-  { titleKey: 'orders_title', prefix: 'orders', count: 8 },
-];
-
 export default async function ContactsPage({
   params,
 }: {
@@ -30,60 +47,74 @@ export default async function ContactsPage({
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations('contacts');
-  const tn = await getTranslations('nav');
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
-      <h1 className="text-3xl font-semibold text-neutral-900">{tn('contacts')}</h1>
-
-      <ul className="mt-4 space-y-1 text-sm text-neutral-700">
-        <li>
-          Email:{' '}
-          <a href={`mailto:${SITE.email}`} className="underline">
-            {SITE.email}
-          </a>
-        </li>
-        <li>
-          Instagram:{' '}
-          <a href={SITE.instagram} target="_blank" rel="noopener noreferrer" className="underline">
-            @shubihubi
-          </a>
-        </li>
-        <li>
-          WhatsApp:{' '}
-          <a href={SITE.whatsapp} target="_blank" rel="noopener noreferrer" className="underline">
-            +39 345 344 6337
-          </a>
-        </li>
-      </ul>
-
-      {GROUPS.map((g) => (
-        <section key={g.prefix} className="mt-10">
-          <h2 className="text-xl font-semibold text-neutral-900">{t(g.titleKey)}</h2>
-          <div className="mt-3 divide-y divide-neutral-200 border-t border-neutral-200">
-            {Array.from({ length: g.count }, (_, i) => i + 1).map((n) => (
-              <details key={n} className="group py-3">
-                <summary className="cursor-pointer text-sm font-medium text-neutral-900">
-                  {t(`${g.prefix}_q${n}`)}
-                </summary>
-                <RichText className="mt-2 whitespace-pre-line text-sm leading-relaxed text-neutral-600">
-                  {t(`${g.prefix}_a${n}`)}
-                </RichText>
-              </details>
-            ))}
+    <div className="bg-white">
+      {/* ── 1. Form Scrivimi + foto ovale — centrati ──────────────────────── */}
+      <section className="px-6 py-12 desk:py-16">
+        <div className="mx-auto flex max-w-[1140px] flex-col items-center gap-10 desk:flex-row desk:items-center desk:justify-center desk:gap-12">
+          <ContactForm />
+          <div className="flex w-full justify-center desk:w-auto">
+            <div className="relative aspect-square w-full max-w-[420px] overflow-hidden rounded-full">
+              <Image
+                src="/gallery/profilo.webp"
+                alt="Clarissa"
+                fill
+                sizes="(min-width:900px) 420px, 80vw"
+                className="object-cover"
+              />
+            </div>
           </div>
-        </section>
-      ))}
-
-      <section className="mt-10 rounded-lg bg-neutral-100 p-5 text-center">
-        <p className="font-medium text-neutral-900">{t('not_found')}</p>
-        <p className="text-sm text-neutral-600">
-          {t('not_found_sub')}:{' '}
-          <a href={`mailto:${SITE.supportEmail}`} className="underline">
-            {SITE.supportEmail}
-          </a>
-        </p>
+        </div>
       </section>
-    </main>
+
+      {/* ── 2. FAQ (sfondo crema) ─────────────────────────────────────────── */}
+      <section className="bg-brand-cream px-6 py-16 desk:px-[60px] desk:py-24">
+        <div className="mx-auto flex max-w-content flex-col gap-16">
+          {GROUPS.map((g) => (
+            <div key={g.titleKey}>
+              <h2 className="mb-6 font-title text-[28px] font-bold uppercase tracking-wide text-brand-pink desk:mb-8 desk:text-[44px]">
+                {t(g.titleKey)}
+              </h2>
+              <div className="border-t border-brand-pink/25">
+                {g.questions.map(([qk, ak]) => (
+                  <details key={qk} className="group border-b border-brand-pink/25">
+                    <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
+                      <span className="font-body text-[16px] font-semibold text-brand-pink desk:text-[20px]">
+                        {t(qk)}
+                      </span>
+                      <span className="shrink-0 text-brand-pink transition-transform duration-200 group-open:rotate-90">
+                        ›
+                      </span>
+                    </summary>
+                    <p className="whitespace-pre-line pb-5 pl-4 pr-8 font-body text-[15px] leading-relaxed text-brand-pinkHot desk:pl-6 desk:text-[18px]">
+                      {t(ak)}
+                    </p>
+                  </details>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── 3. Banner "Non hai trovato la risposta?" ──────────────────────── */}
+      <section className="bg-brand-cream px-6 py-12">
+        <div className="mx-auto flex max-w-content flex-col items-center text-center">
+          <p className="font-body text-[16px] font-semibold leading-relaxed text-brand-pink desk:text-[20px]">
+            {t('not_found')}
+          </p>
+          <p className="mt-1.5 font-body text-[15px] leading-relaxed text-brand-pink desk:text-[18px]">
+            {t('not_found_sub')}
+          </p>
+          <a
+            href={`mailto:${SUPPORT_EMAIL}`}
+            className="mt-1 font-body text-[15px] font-bold text-brand-pink underline desk:text-[18px]"
+          >
+            {SUPPORT_EMAIL}
+          </a>
+        </div>
+      </section>
+    </div>
   );
 }
