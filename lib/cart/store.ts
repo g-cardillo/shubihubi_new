@@ -12,16 +12,24 @@ import {
  * Store carrello (Zustand) — replica `CartController` di Flutter per la parte
  * GUEST. Gli articoli sono persistiti in localStorage (`persist`).
  *
- * Sincronizzazione Firestore per utenti loggati e merge guest→utente al login
- * NON sono ancora attivi: richiedono l'auth (Fase 4). I punti di aggancio sono
- * in `lib/cart/firestore.ts`. Finché non c'è auth, questo store guest è la
- * sola fonte di verità ed è pienamente funzionante.
+ * Per utenti loggati il carrello è sincronizzato da Firestore (vedi
+ * `AuthProvider` + `lib/cart/firestore.ts`): in quel caso `mode === 'user'` e
+ * la persistenza su localStorage è sospesa (la fonte di verità è Firestore).
+ * Da guest, lo store persistito in localStorage è la sola fonte di verità.
  */
 export interface CartState {
   items: CartItem[];
   isOpen: boolean;
   /** True dopo l'idratazione da localStorage (evita mismatch SSR). */
   hydrated: boolean;
+  /**
+   * `'user'` quando il carrello è sincronizzato da Firestore (utente loggato).
+   * In questa modalità NON persistiamo su localStorage: la fonte di verità è
+   * Firestore. Senza questo gate, il carrello utente verrebbe riscritto nella
+   * chiave guest e `mergeGuestIntoUser` lo ri-fonderebbe (con `increment`) ad
+   * ogni mount del provider — es. al cambio lingua — gonfiando le quantità.
+   */
+  mode: 'guest' | 'user';
 
   addItem: (item: CartItem) => void;
   increment: (key: string) => void;
@@ -33,8 +41,10 @@ export interface CartState {
   open: () => void;
   close: () => void;
   toggle: () => void;
-  /** Sostituisce in blocco le righe (usato dal sync Firestore, Fase 4). */
+  /** Sostituisce in blocco le righe (usato dal sync Firestore). */
   setItems: (items: CartItem[]) => void;
+  /** Imposta la modalità guest/user (gestita da AuthProvider). */
+  setMode: (mode: 'guest' | 'user') => void;
 }
 
 export const useCartStore = create<CartState>()(
@@ -43,6 +53,7 @@ export const useCartStore = create<CartState>()(
       items: [],
       isOpen: false,
       hydrated: false,
+      mode: 'guest',
 
       addItem: (item) =>
         set((state) => {
@@ -93,12 +104,15 @@ export const useCartStore = create<CartState>()(
       close: () => set({ isOpen: false }),
       toggle: () => set((s) => ({ isOpen: !s.isOpen })),
       setItems: (items) => set({ items }),
+      setMode: (mode) => set({ mode }),
     }),
     {
       name: GUEST_CART_KEY,
       storage: createJSONStorage(() => localStorage),
-      // Persisti solo le righe, non lo stato UI (isOpen/hydrated).
-      partialize: (state) => ({ items: state.items }),
+      // Persisti solo le righe del carrello GUEST. Quando l'utente è loggato
+      // (mode 'user') la fonte di verità è Firestore: non scriviamo nulla nella
+      // chiave guest, così non si crea il loop di re-merge.
+      partialize: (state) => ({ items: state.mode === 'user' ? [] : state.items }),
       onRehydrateStorage: () => (state) => {
         if (state) state.hydrated = true;
       },

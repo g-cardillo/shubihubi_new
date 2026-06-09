@@ -8,29 +8,56 @@ import { auth } from '@/lib/firebase/client';
 import { Link, usePathname, useRouter } from '@/i18n/navigation';
 import { useCartStore } from '@/lib/cart/store';
 import { totalQty } from '@/lib/types/cart';
+import {
+  IconHome,
+  IconShop,
+  IconGallery,
+  IconAbout,
+  IconContacts,
+  IconProfile,
+  IconCart,
+  IconAdmin,
+  IconCaret,
+} from './icons';
 
 /**
  * Navbar globale (replica `NavigationMenu` di Flutter, versione web).
  *
- * Sticky bianca, h-16 (64px), elevation 0 come l'`appBarTheme`. Logo circolare
- * 32px, link inline su desktop (≥ desk/900px) e menu hamburger sotto. Azioni:
- * switch lingua IT/EN, profilo, admin (solo admin), carrello con badge rosa.
- *
- * NB: la trasparenza-su-hero del Flutter (che dipende dallo scroll della home)
- * non è replicata: qui la navbar è bianca piena, fedele al tema base.
+ * Allineamento Flutter: logo a sinistra, link di navigazione spinti a destra
+ * subito prima delle azioni (lingua/admin/profilo/carrello). "Home" ha un
+ * sottomenu (Home / Live Painting / Stationery): su desktop si apre in hover,
+ * su mobile con una freccia che espande la voce nel drawer. Le icone sono le
+ * stesse del Flutter: Iconsax (nav/drawer) e Material Outlined (azioni).
  */
-const LINKS = [
+type SubLink = { href: string; key: string };
+type NavLink = {
+  href: string;
+  key: string;
+  Icon: (p: { className?: string }) => JSX.Element;
+  children?: SubLink[];
+};
+
+const HOME_CHILDREN: SubLink[] = [
   { href: '/', key: 'home' },
-  { href: '/shop', key: 'shop' },
-  { href: '/gallery', key: 'gallery' },
-  { href: '/about', key: 'about' },
-  { href: '/contacts', key: 'contacts' },
-] as const;
+  { href: '/live-painting', key: 'live_painting' },
+  { href: '/stationery', key: 'stationery' },
+];
+
+const LINKS: NavLink[] = [
+  { href: '/', key: 'home', Icon: IconHome, children: HOME_CHILDREN },
+  { href: '/shop', key: 'shop', Icon: IconShop },
+  { href: '/gallery', key: 'gallery', Icon: IconGallery },
+  { href: '/about', key: 'about', Icon: IconAbout },
+  { href: '/contacts', key: 'contacts', Icon: IconContacts },
+];
+
+const SUBPAGE_HREFS = ['/live-painting', '/stationery'];
 
 export function Navbar() {
   const t = useTranslations('nav');
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [homeExpanded, setHomeExpanded] = useState(false);
   const isAdmin = useIsAdmin();
 
   const toggleCart = useCartStore((s) => s.toggle);
@@ -40,11 +67,14 @@ export function Navbar() {
   // Chiude il menu mobile a ogni cambio rotta.
   useEffect(() => {
     setMenuOpen(false);
+    setHomeExpanded(false);
   }, [pathname]);
 
   function isActive(href: string) {
     return href === '/' ? pathname === '/' : pathname.startsWith(href);
   }
+  // "Home" è attiva anche sulle sue sottopagine.
+  const homeGroupActive = pathname === '/' || SUBPAGE_HREFS.includes(pathname);
 
   return (
     <header className="sticky top-0 z-40 border-b border-neutral-100 bg-white">
@@ -55,9 +85,9 @@ export function Navbar() {
           onClick={() => setMenuOpen((o) => !o)}
           aria-label="Menu"
           aria-expanded={menuOpen}
-          className="desk:hidden -ml-1 flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-neutral-100"
+          className="-ml-1 flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-neutral-100 desk:hidden"
         >
-          <span className="text-xl">{menuOpen ? '✕' : '☰'}</span>
+          {menuOpen ? <CloseGlyph /> : <MenuGlyph />}
         </button>
 
         {/* Logo */}
@@ -68,24 +98,34 @@ export function Navbar() {
           <span className="font-special text-xl text-brand-pink">Shubihubi</span>
         </Link>
 
-        {/* Link desktop */}
-        <div className="ml-4 hidden items-center gap-1 desk:flex">
-          {LINKS.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              className={`rounded-full px-3 py-2 text-[15px] transition-colors ${
-                isActive(l.href)
-                  ? 'font-semibold text-brand-pink'
-                  : 'font-normal text-ink hover:text-brand-pink'
-              }`}
-            >
-              {t(l.key)}
-            </Link>
-          ))}
-        </div>
-
         <div className="flex-1" />
+
+        {/* Link desktop (a destra, come Flutter) */}
+        <div className="hidden items-center gap-1 desk:flex">
+          {LINKS.map((l) =>
+            l.children ? (
+              <HomeDropdown
+                key={l.href}
+                label={t(l.key)}
+                active={homeGroupActive}
+                items={l.children}
+                t={t}
+              />
+            ) : (
+              <Link
+                key={l.href}
+                href={l.href}
+                className={`rounded-full px-3 py-2 text-[15px] transition-colors ${
+                  isActive(l.href)
+                    ? 'font-semibold text-brand-pink'
+                    : 'font-normal text-ink hover:text-brand-pink'
+                }`}
+              >
+                {t(l.key)}
+              </Link>
+            ),
+          )}
+        </div>
 
         {/* Azioni */}
         <div className="flex items-center gap-1">
@@ -98,7 +138,7 @@ export function Navbar() {
               title="Admin Panel"
               className="flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-neutral-100"
             >
-              <span className="text-lg">⚙️</span>
+              <IconAdmin className="h-[22px] w-[22px]" />
             </Link>
           )}
 
@@ -107,7 +147,7 @@ export function Navbar() {
             aria-label={t('profile')}
             className="flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-neutral-100"
           >
-            <span className="text-lg">👤</span>
+            <IconProfile className="h-[22px] w-[22px]" />
           </Link>
 
           <button
@@ -116,7 +156,7 @@ export function Navbar() {
             aria-label={t('cart')}
             className="relative flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-neutral-100"
           >
-            <span className="text-lg">🛍️</span>
+            <IconCart className="h-[22px] w-[22px]" />
             {hydrated && count > 0 && (
               <span className="absolute right-0 top-0 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-brand-pink px-1 text-[11px] font-extrabold text-white">
                 {count}
@@ -126,25 +166,144 @@ export function Navbar() {
         </div>
       </nav>
 
-      {/* Menu mobile */}
+      {/* Menu mobile (drawer) */}
       {menuOpen && (
-        <div className="border-t border-neutral-100 bg-white px-4 py-2 desk:hidden">
-          {LINKS.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              className={`block rounded-lg px-3 py-3 text-base ${
-                isActive(l.href)
-                  ? 'font-semibold text-brand-pink'
-                  : 'text-ink hover:bg-neutral-50'
-              }`}
-            >
-              {t(l.key)}
-            </Link>
-          ))}
+        <div className="border-t border-neutral-100 bg-white px-2 py-2 desk:hidden">
+          {LINKS.map((l) => {
+            const Icon = l.Icon;
+            if (l.children) {
+              return (
+                <div key={l.href}>
+                  <div
+                    className={`flex items-center rounded-lg ${
+                      homeGroupActive ? 'text-brand-pink' : 'text-ink'
+                    }`}
+                  >
+                    <Link
+                      href={l.href}
+                      className={`flex flex-1 items-center gap-3 px-3 py-3 text-base ${
+                        homeGroupActive ? 'font-semibold' : ''
+                      }`}
+                    >
+                      <Icon className="h-[22px] w-[22px]" />
+                      {t(l.key)}
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => setHomeExpanded((o) => !o)}
+                      aria-label={t(l.key)}
+                      aria-expanded={homeExpanded}
+                      className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-neutral-100"
+                    >
+                      <IconCaret
+                        className={`h-5 w-5 transition-transform ${homeExpanded ? 'rotate-180' : ''}`}
+                      />
+                    </button>
+                  </div>
+                  {homeExpanded && (
+                    <div className="mb-1 ml-[34px] border-l border-neutral-100 pl-2">
+                      {l.children.map((c) => (
+                        <Link
+                          key={c.href}
+                          href={c.href}
+                          className={`block rounded-lg px-3 py-2.5 text-[15px] ${
+                            isActive(c.href)
+                              ? 'font-semibold text-brand-pink'
+                              : 'text-ink hover:bg-neutral-50'
+                          }`}
+                        >
+                          {t(c.key)}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+            return (
+              <Link
+                key={l.href}
+                href={l.href}
+                className={`flex items-center gap-3 rounded-lg px-3 py-3 text-base ${
+                  isActive(l.href)
+                    ? 'font-semibold text-brand-pink'
+                    : 'text-ink hover:bg-neutral-50'
+                }`}
+              >
+                <Icon className="h-[22px] w-[22px]" />
+                {t(l.key)}
+              </Link>
+            );
+          })}
         </div>
       )}
     </header>
+  );
+}
+
+/** "Home" desktop con sottomenu in hover (Home / Live Painting / Stationery). */
+function HomeDropdown({
+  label,
+  active,
+  items,
+  t,
+}: {
+  label: string;
+  active: boolean;
+  items: SubLink[];
+  t: (k: string) => string;
+}) {
+  const pathname = usePathname();
+  const isActive = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href));
+
+  return (
+    <div className="group relative">
+      <Link
+        href="/"
+        className={`flex items-center gap-0.5 rounded-full px-3 py-2 text-[15px] transition-colors ${
+          active ? 'font-semibold text-brand-pink' : 'font-normal text-ink hover:text-brand-pink'
+        }`}
+      >
+        {label}
+        <IconCaret className="h-4 w-4 transition-transform group-hover:rotate-180" />
+      </Link>
+
+      {/* pt-2 fa da ponte sul gap, così l'hover non si interrompe. */}
+      <div className="invisible absolute left-1/2 top-full z-50 min-w-[190px] -translate-x-1/2 pt-2 opacity-0 transition-opacity duration-150 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+        <ul className="overflow-hidden rounded-xl border border-neutral-100 bg-white py-1 shadow-lg">
+          {items.map((c) => (
+            <li key={c.href}>
+              <Link
+                href={c.href}
+                className={`block px-5 py-2.5 text-[15px] transition-colors ${
+                  isActive(c.href)
+                    ? 'font-semibold text-brand-pink'
+                    : 'text-ink hover:bg-neutral-50'
+                }`}
+              >
+                {t(c.key)}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+function MenuGlyph() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" aria-hidden className="h-6 w-6">
+      <path d="M3 6h18M3 12h18M3 18h18" />
+    </svg>
+  );
+}
+
+function CloseGlyph() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" aria-hidden className="h-6 w-6">
+      <path d="M6 6l12 12M18 6 6 18" />
+    </svg>
   );
 }
 
@@ -161,10 +320,11 @@ function LangSwitcher() {
       onClick={() => router.replace(pathname, { locale: other })}
       aria-label={`Switch to ${other.toUpperCase()}`}
       title={other.toUpperCase()}
-      className="flex h-10 items-center gap-1 rounded-full px-2 text-base hover:bg-neutral-100"
+      className="flex h-10 items-center gap-0.5 rounded-full px-2 text-base hover:bg-neutral-100"
     >
       <span aria-hidden>{locale === 'it' ? '🇮🇹' : '🇬🇧'}</span>
       <span className="text-xs font-semibold text-ink">{locale.toUpperCase()}</span>
+      <IconCaret className="h-4 w-4 text-ink" />
     </button>
   );
 }

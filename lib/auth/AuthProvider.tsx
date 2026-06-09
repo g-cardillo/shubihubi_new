@@ -43,6 +43,14 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+/**
+ * UID già fusi in questa sessione JS. Vive a livello di modulo (singleton), così
+ * sopravvive ai re-mount di `AuthProvider` — es. al cambio lingua, che rimonta
+ * il layout `[locale]`. Senza questo guard `mergeGuestIntoUser` rigirerebbe a
+ * ogni mount sommando le quantità (`increment`) e gonfiando il carrello.
+ */
+const mergedUids = new Set<string>();
+
 function toAppUser(u: User | null): AppUser | null {
   if (!u) return null;
   return {
@@ -111,15 +119,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (uid && user?.emailVerified) {
       (async () => {
-        try {
-          await mergeGuestIntoUser(uid);
-        } catch {
-          /* il guest cart resta locale se il merge fallisce */
+        // Fonde il guest cart UNA SOLA volta per uid in questa sessione JS.
+        // DEVE precedere `setMode('user')`: il merge legge la chiave guest da
+        // localStorage, mentre `setMode('user')` ne sospende (svuota) la
+        // persistenza.
+        if (!mergedUids.has(uid)) {
+          mergedUids.add(uid);
+          try {
+            await mergeGuestIntoUser(uid);
+          } catch {
+            mergedUids.delete(uid); // ritenta al prossimo trigger
+          }
         }
+        useCartStore.getState().setMode('user');
         cartUnsub.current = streamUserCart(uid, (items) => {
           useCartStore.getState().setItems(items);
         });
       })();
+    } else {
+      // Guest (o logout): torna alla persistenza locale.
+      useCartStore.getState().setMode('guest');
     }
 
     return () => {
@@ -166,6 +185,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     await fbSignOut(auth);
     await clearSessionCookie();
+    useCartStore.getState().setMode('guest');
     useCartStore.getState().clear();
   }, []);
 
