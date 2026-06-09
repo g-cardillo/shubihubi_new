@@ -13,7 +13,7 @@ import localFont from 'next/font/local';
 
 export const comfortaa = Comfortaa({
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
+  weight: ['300', '400', '500', '600', '700'],
   variable: '--font-comfortaa',
   display: 'swap',
 });

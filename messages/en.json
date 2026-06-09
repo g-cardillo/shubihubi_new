@@ -38,7 +38,15 @@
     "options": {
       "color": "Color",
       "format": "Format",
-      "frame": "Add frame"
+      "frame": "Add frame",
+      "quantity": "Quantity"
+    },
+    "taxIncluded": "Taxes included",
+    "wishlist": "Add to wishlist",
+    "features": {
+      "shipping": "Free shipping",
+      "handmade": "Handmade in Italy",
+      "unique": "Vivid colours, unique design"
     },
     "extras": {
       "tecnica": "Technique",

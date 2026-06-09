@@ -19,11 +19,16 @@ const config: Config = {
         brand: {
           pink: "#EE67AB", // primary
           pinkHot: "#F2619C", // accento testo
+          pinkBright: "#F3B4E8", // light pink button su fondo rosa (DS --shubi-pink-light)
           pinkSkin: "#F4D8DA", // rosa tenue (sfondi/bordi)
           pinkLight: "#FFD4D9", // divisori/bordi input
+          pinkInput: "#FFD4D9", // alias: riempimento input/stepper (DS --shubi-pink-input)
           peach: "#FFD0C9", // secondary
           red: "#E01919", // accento/prezzo/errore
           redTitle: "#D20001", // titoli
+          redSoft: "#E01111", // testo footer (DS --shubi-red-soft)
+          corallo: "#FF5757", // corallo pieno (accento)
+          coralloChiaro: "#E96F63", // corallo chiaro (accento)
           cream: "#FFF3CC", // superfici calde
           cream2: "#FFF4C2", // testo su bottone rosa
           creamFooter: "#F5EBC1", // sfondo footer
@@ -58,6 +63,8 @@ const config: Config = {
       },
       boxShadow: {
         "pink-cta": "0 8px 24px 0 rgba(238,103,171,0.30)",
+        // Hover-lift generico del design system (DS --shadow-lift).
+        lift: "0 8px 24px 0 rgba(238,103,171,0.18)",
       },
     },
   },

@@ -108,19 +108,19 @@ export default async function ProductPage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <nav className="mb-6 text-sm text-neutral-500">
-        <Link href="/shop" className="hover:underline">
+      <nav className="mb-6 flex items-center gap-1.5 font-body text-sm font-semibold text-brand-pink">
+        <Link href="/shop" className="transition-opacity hover:opacity-70">
           {t('backToShop')}
         </Link>
-        <span className="px-2">/</span>
-        <span className="text-neutral-700">{title}</span>
+        <span>›</span>
+        <span className="text-brand-red">{title}</span>
       </nav>
 
       <ProductDetail product={product} locale={locale} />
 
       {recommendations.length > 0 && (
         <section className="mt-16">
-          <h2 className="mb-6 text-xl font-semibold text-neutral-900">
+          <h2 className="mb-6 font-special text-4xl text-brand-red">
             {t('recommendations')}
           </h2>
           <ProductGrid products={recommendations} locale={locale} />

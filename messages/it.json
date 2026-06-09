@@ -38,7 +38,15 @@
     "options": {
       "color": "Colore",
       "format": "Formato",
-      "frame": "Aggiungi cornice"
+      "frame": "Aggiungi cornice",
+      "quantity": "Quantità"
+    },
+    "taxIncluded": "Tasse incluse",
+    "wishlist": "Aggiungi ai preferiti",
+    "features": {
+      "shipping": "Spedizione gratuita",
+      "handmade": "Realizzato a mano in Italia",
+      "unique": "Colori vivaci e design unico"
     },
     "extras": {
       "tecnica": "Tecnica",
