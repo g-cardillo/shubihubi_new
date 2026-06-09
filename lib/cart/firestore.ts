@@ -3,16 +3,11 @@
 /**
  * Sincronizzazione carrello con Firestore per utenti LOGGATI.
  *
- * ⚠️ NON ANCORA COLLEGATO. L'auth arriva nella Fase 4: queste funzioni sono
- * pronte e replicano `CartRepositoryImpl` di Flutter, ma nessuno le invoca
- * finché non esiste un `uid` autenticato. Finché l'utente è guest, la sola
- * fonte di verità è lo store Zustand persistito in localStorage.
- *
- * TODO(Fase 4 – auth): al login
- *   1) `await mergeGuestIntoUser(uid)` (fonde il guest cart nei doc utente),
- *   2) `useCartStore.getState().clear()` (svuota il guest locale),
- *   3) sottoscrivi `streamUserCart(uid, setItems)` e propaga a `setItems`.
- *   Al logout: annulla la sottoscrizione e ricarica il guest cart.
+ * Collegato: `AuthProvider` al login fonde il guest cart (`mergeGuestIntoUser`),
+ * passa lo store in `mode === 'user'` e sottoscrive `streamUserCart`. Le
+ * mutazioni dello store (add/increment/decrement/remove/updateNote/clear)
+ * propagano qui via `persistLine`/`deleteLine`/`clearAll`; lo snapshot realtime
+ * riconcilia poi lo stato locale. Da guest la fonte di verità resta localStorage.
  */
 import {
   collection,

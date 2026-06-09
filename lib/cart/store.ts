@@ -7,6 +7,7 @@ import {
   cartItemKey,
   GUEST_CART_KEY,
 } from '@/lib/types/cart';
+import { persistLine, deleteLine, clearAll } from '@/lib/cart/firestore';
 
 /**
  * Store carrello (Zustand) — replica `CartController` di Flutter per la parte
@@ -30,6 +31,8 @@ export interface CartState {
    * ogni mount del provider — es. al cambio lingua — gonfiando le quantità.
    */
   mode: 'guest' | 'user';
+  /** UID dell'utente loggato; serve a propagare le mutazioni a Firestore. */
+  uid: string | null;
 
   addItem: (item: CartItem) => void;
   increment: (key: string) => void;
@@ -43,69 +46,104 @@ export interface CartState {
   toggle: () => void;
   /** Sostituisce in blocco le righe (usato dal sync Firestore). */
   setItems: (items: CartItem[]) => void;
-  /** Imposta la modalità guest/user (gestita da AuthProvider). */
-  setMode: (mode: 'guest' | 'user') => void;
+  /**
+   * Imposta la modalità guest/user (gestita da AuthProvider). In modalità
+   * `'user'` va passato l'`uid`, così le mutazioni vengono propagate a Firestore.
+   */
+  setMode: (mode: 'guest' | 'user', uid?: string | null) => void;
 }
 
 export const useCartStore = create<CartState>()(
   persist(
-    (set) => ({
-      items: [],
-      isOpen: false,
-      hydrated: false,
-      mode: 'guest',
+    (set, get) => {
+      // Propaga una riga aggiornata a Firestore quando l'utente è loggato.
+      // Lo snapshot realtime (`streamUserCart`) riconcilierà poi lo stato; qui
+      // l'update locale è solo ottimistico per la reattività della UI.
+      const syncLine = (item: CartItem) => {
+        const { mode, uid } = get();
+        if (mode === 'user' && uid) void persistLine(uid, item);
+      };
+      const syncDelete = (key: string) => {
+        const { mode, uid } = get();
+        if (mode === 'user' && uid) void deleteLine(uid, key);
+      };
 
-      addItem: (item) =>
-        set((state) => {
+      return {
+        items: [],
+        isOpen: false,
+        hydrated: false,
+        mode: 'guest',
+        uid: null,
+
+        addItem: (item) => {
+          const state = get();
           const key = cartItemKey(item);
           const i = state.items.findIndex((x) => cartItemKey(x) === key);
+          let resulting: CartItem;
           if (i >= 0) {
+            resulting = { ...state.items[i], qty: state.items[i].qty + item.qty };
+            if (item.note) resulting.note = item.note;
             const items = [...state.items];
-            const existing = { ...items[i], qty: items[i].qty + item.qty };
-            if (item.note) existing.note = item.note;
-            items[i] = existing;
-            return { items, isOpen: true };
+            items[i] = resulting;
+            set({ items, isOpen: true });
+          } else {
+            resulting = item;
+            set({ items: [...state.items, item], isOpen: true });
           }
-          return { items: [...state.items, item], isOpen: true };
-        }),
+          syncLine(resulting);
+        },
 
-      increment: (key) =>
-        set((state) => ({
-          items: state.items.map((x) =>
-            cartItemKey(x) === key ? { ...x, qty: x.qty + 1 } : x,
-          ),
-        })),
+        increment: (key) => {
+          const target = get().items.find((x) => cartItemKey(x) === key);
+          if (!target) return;
+          const updated = { ...target, qty: target.qty + 1 };
+          set((state) => ({
+            items: state.items.map((x) => (cartItemKey(x) === key ? updated : x)),
+          }));
+          syncLine(updated);
+        },
 
-      decrement: (key) =>
-        set((state) => ({
-          items: state.items.map((x) =>
-            cartItemKey(x) === key && x.qty > 1 ? { ...x, qty: x.qty - 1 } : x,
-          ),
-        })),
+        decrement: (key) => {
+          const target = get().items.find((x) => cartItemKey(x) === key);
+          if (!target || target.qty <= 1) return;
+          const updated = { ...target, qty: target.qty - 1 };
+          set((state) => ({
+            items: state.items.map((x) => (cartItemKey(x) === key ? updated : x)),
+          }));
+          syncLine(updated);
+        },
 
-      remove: (key) =>
-        set((state) => ({
-          items: state.items.filter((x) => cartItemKey(x) !== key),
-        })),
+        remove: (key) => {
+          set((state) => ({
+            items: state.items.filter((x) => cartItemKey(x) !== key),
+          }));
+          syncDelete(key);
+        },
 
-      updateNote: (key, note) =>
-        set((state) => {
+        updateNote: (key, note) => {
           const trimmed = (note ?? '').trim();
-          return {
-            items: state.items.map((x) =>
-              cartItemKey(x) === key ? { ...x, note: trimmed || null } : x,
-            ),
-          };
-        }),
+          const target = get().items.find((x) => cartItemKey(x) === key);
+          if (!target) return;
+          const updated = { ...target, note: trimmed || null };
+          set((state) => ({
+            items: state.items.map((x) => (cartItemKey(x) === key ? updated : x)),
+          }));
+          syncLine(updated);
+        },
 
-      clear: () => set({ items: [] }),
+        clear: () => {
+          const { mode, uid } = get();
+          set({ items: [] });
+          if (mode === 'user' && uid) void clearAll(uid);
+        },
 
-      open: () => set({ isOpen: true }),
-      close: () => set({ isOpen: false }),
-      toggle: () => set((s) => ({ isOpen: !s.isOpen })),
-      setItems: (items) => set({ items }),
-      setMode: (mode) => set({ mode }),
-    }),
+        open: () => set({ isOpen: true }),
+        close: () => set({ isOpen: false }),
+        toggle: () => set((s) => ({ isOpen: !s.isOpen })),
+        setItems: (items) => set({ items }),
+        setMode: (mode, uid = null) => set({ mode, uid }),
+      };
+    },
     {
       name: GUEST_CART_KEY,
       storage: createJSONStorage(() => localStorage),

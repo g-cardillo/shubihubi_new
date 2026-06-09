@@ -131,7 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             mergedUids.delete(uid); // ritenta al prossimo trigger
           }
         }
-        useCartStore.getState().setMode('user');
+        useCartStore.getState().setMode('user', uid);
         cartUnsub.current = streamUserCart(uid, (items) => {
           useCartStore.getState().setItems(items);
         });
