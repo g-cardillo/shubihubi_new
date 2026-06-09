@@ -77,6 +77,24 @@ export async function getCategories(): Promise<ProductCategory[]> {
   return [{ value: '', count: all.length }, ...categories];
 }
 
+/**
+ * Macro-categorie per i tab dello shop, derivate dai valori reali del campo
+ * `macroId` (con fallback `type`, già normalizzato nel mapper). Ordinate per
+ * frequenza decrescente; sempre precedute dalla voce "tutti" (`value` vuoto).
+ * Quando su Firestore verranno valorizzati nuovi `macroId`, i tab compaiono
+ * automaticamente senza modifiche al codice.
+ */
+export async function getMacroCategories(): Promise<ProductCategory[]> {
+  const all = await getAllProducts();
+  const counts = new Map<string, number>();
+  for (const p of all) {
+    if (p.macroId) counts.set(p.macroId, (counts.get(p.macroId) ?? 0) + 1);
+  }
+  const macros = Array.from(counts, ([value, count]) => ({ value, count }))
+    .sort((a, b) => b.count - a.count || a.value.localeCompare(b.value));
+  return [{ value: '', count: all.length }, ...macros];
+}
+
 /** Pagina filtrata di prodotti per la pagina shop (filtro/paginazione in memoria). */
 export interface ProductPage {
   items: Product[];

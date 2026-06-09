@@ -1,44 +1,44 @@
-import { getTranslations } from 'next-intl/server';
-import { Link } from '@/i18n/navigation';
+'use client';
+
 import type { ProductCategory } from '@/lib/products/repository';
 
 /**
- * Barra categorie dello shop. Link-based (crawlabile/SEO) verso `/shop?cat=`.
- * Le categorie sono derivate dai dati reali; la voce "tutti" ha `value` vuoto.
- * Cambiare categoria riporta sempre a pagina 1.
+ * Barra macro-categorie dello shop — stile TAB con underline (non pill).
+ * Client component: lo stato del tab attivo è gestito da `ShopBrowser`, che
+ * filtra i prodotti in memoria (il catalogo è piccolo) per lo scroll infinito.
+ * La voce "tutti" ha `value` vuoto.
  */
-export async function CategoryBar({
-  categories,
+export function CategoryBar({
+  macros,
   active,
+  allLabel,
+  onSelect,
 }: {
-  categories: ProductCategory[];
+  macros: ProductCategory[];
   active: string;
+  allLabel: string;
+  onSelect: (value: string) => void;
 }) {
-  const t = await getTranslations('shop');
-
   return (
-    <nav aria-label={t('categories')} className="overflow-x-auto">
-      <ul className="flex w-max gap-2 pb-1">
-        {categories.map((c) => {
-          const isActive = c.value === active;
-          const label = c.value || t('allCategories');
+    <nav aria-label={allLabel} className="overflow-x-auto border-b border-black/10">
+      <ul className="flex w-max gap-7 px-1">
+        {macros.map((m) => {
+          const isActive = m.value === active;
+          const label = m.value || allLabel;
           return (
-            <li key={c.value || '__all__'}>
-              <Link
-                href={c.value ? `/shop?cat=${encodeURIComponent(c.value)}` : '/shop'}
+            <li key={m.value || '__all__'}>
+              <button
+                type="button"
+                onClick={() => onSelect(m.value)}
                 aria-current={isActive ? 'page' : undefined}
-                className={`whitespace-nowrap rounded-full border-2 px-4 py-1.5 text-sm font-medium transition ${
+                className={`relative -mb-px whitespace-nowrap border-b-2 pb-3 pt-1 text-sm font-medium transition-colors ${
                   isActive
-                    ? 'border-brand-pink bg-brand-pink text-white'
-                    : 'border-brand-pinkSkin text-ink hover:border-brand-pink'
+                    ? 'border-brand-pink text-ink'
+                    : 'border-transparent text-ink/55 hover:text-ink'
                 }`}
               >
                 {label}
-                <span className={isActive ? 'text-white/70' : 'text-neutral-400'}>
-                  {' '}
-                  {c.count}
-                </span>
-              </Link>
+              </button>
             </li>
           );
         })}

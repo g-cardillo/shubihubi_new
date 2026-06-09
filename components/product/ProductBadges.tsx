@@ -28,7 +28,7 @@ export function ProductBadges({
       {(product.isNew || product.isLimited) && (
         <span className="absolute right-3 top-3 z-10 flex flex-col items-end gap-2">
           {product.isNew && (
-            <span className={`${badgeBase} border border-black/10 bg-white text-black`}>
+            <span className={`${badgeBase} bg-neutral-200 text-neutral-700`}>
               {labels.new}
             </span>
           )}

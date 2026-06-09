@@ -22,8 +22,9 @@ export async function ProductGrid({
     );
   }
 
+  // Griglia staggered (replica `ShopProductSliver`): 2 colonne mobile, 4 desktop.
   return (
-    <ul className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">
+    <ul className="grid grid-cols-2 gap-x-4 gap-y-8 desk:grid-cols-4 desk:gap-x-[18px]">
       {products.map((product, i) => (
         <li key={product.id}>
           <ProductCard product={product} locale={locale} priority={i < 4} />

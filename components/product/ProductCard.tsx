@@ -18,10 +18,13 @@ export async function ProductCard({
   product,
   locale,
   priority = false,
+  showFormats = true,
 }: {
   product: Product;
   locale: Locale;
   priority?: boolean;
+  /** Mostra i chip formato sotto la card. La griglia shop li nasconde. */
+  showFormats?: boolean;
 }) {
   const t = await getTranslations('product');
   const title = productTitle(product, locale);
@@ -89,7 +92,7 @@ export async function ProductCard({
       </div>
 
       {/* Chip formati */}
-      {product.formats.length > 0 && (
+      {showFormats && product.formats.length > 0 && (
         <div className="mt-2.5 flex flex-wrap gap-2">
           {inlineFormats.map((f) => (
             <FormatChip key={f} label={f} />
