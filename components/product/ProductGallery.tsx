@@ -19,7 +19,7 @@ export function ProductGallery({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="relative aspect-square overflow-hidden rounded-xl bg-neutral-100">
+      <div className="relative aspect-square overflow-hidden rounded-panel bg-black/[0.06]">
         {main ? (
           <Image
             src={main}
@@ -45,10 +45,10 @@ export function ProductGallery({
                 onClick={() => setActive(i)}
                 aria-label={`${alt} — ${i + 1}`}
                 aria-current={i === active}
-                className={`relative h-16 w-16 overflow-hidden rounded-md border-2 transition ${
+                className={`relative h-16 w-16 overflow-hidden rounded-[10px] border-2 transition ${
                   i === active
-                    ? 'border-neutral-900'
-                    : 'border-transparent hover:border-neutral-300'
+                    ? 'border-brand-pink'
+                    : 'border-brand-pinkSkin hover:border-brand-pink'
                 }`}
               >
                 <Image

@@ -14,22 +14,22 @@ export function CheckoutCancel() {
 
   return (
     <div className="flex flex-col items-stretch text-center">
-      <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-pink-100 text-3xl text-rose-600">
+      <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-brand-pink/10 text-3xl text-brand-red">
         ✕
       </div>
-      <h1 className="mt-6 text-3xl font-bold text-rose-600">{t('not_completed')}</h1>
+      <h1 className="mt-6 text-3xl font-bold text-brand-red">{t('not_completed')}</h1>
       <p className="mt-3 text-sm text-neutral-600">{t('not_completed_body')}</p>
-      <p className="mt-2 text-sm font-semibold text-pink-500">{t('cart_preserved')}</p>
+      <p className="mt-2 text-sm font-semibold text-brand-pink">{t('cart_preserved')}</p>
 
       <Link
         href={orderId ? `/checkout?orderId=${orderId}` : '/checkout'}
-        className="mt-9 inline-flex h-[52px] w-full items-center justify-center rounded-full bg-pink-500 px-6 text-base font-semibold text-white hover:bg-pink-600"
+        className="mt-9 inline-flex h-[52px] w-full items-center justify-center rounded-full bg-brand-pink px-6 text-base font-semibold text-white hover:brightness-105"
       >
         {t('retry')}
       </Link>
       <Link
         href="/shop"
-        className="mt-3 inline-flex h-[52px] w-full items-center justify-center rounded-full border-2 border-pink-400 px-6 text-base font-semibold text-rose-600 hover:bg-pink-50"
+        className="mt-3 inline-flex h-[52px] w-full items-center justify-center rounded-full border-2 border-brand-pink px-6 text-base font-semibold text-brand-red hover:bg-brand-pink/5"
       >
         {t('go_shop')}
       </Link>

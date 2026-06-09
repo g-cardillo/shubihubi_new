@@ -5,6 +5,9 @@ import { setRequestLocale } from 'next-intl/server';
 import { routing } from '@/i18n/routing';
 import { CartProvider } from '@/components/cart/CartProvider';
 import { AuthProvider } from '@/lib/auth/AuthProvider';
+import { Navbar } from '@/components/layout/Navbar';
+import { Footer } from '@/components/layout/Footer';
+import { fontVariables } from '../fonts';
 import '../globals.css';
 
 export const metadata: Metadata = {
@@ -35,11 +38,17 @@ export default async function LocaleLayout({
   setRequestLocale(locale);
 
   return (
-    <html lang={locale}>
+    <html lang={locale} className={fontVariables}>
       <body>
         <NextIntlClientProvider>
           <AuthProvider>
-            <CartProvider>{children}</CartProvider>
+            <CartProvider>
+              <div className="flex min-h-screen flex-col">
+                <Navbar />
+                <main className="flex-1">{children}</main>
+                <Footer />
+              </div>
+            </CartProvider>
           </AuthProvider>
         </NextIntlClientProvider>
       </body>

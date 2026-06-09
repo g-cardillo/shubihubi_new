@@ -121,19 +121,19 @@ export function OrderSummary() {
               value={codeInput}
               onChange={(e) => setCodeInput(e.target.value.toUpperCase())}
               placeholder={t('discount_label')}
-              className="flex-1 rounded-md border border-neutral-300 px-3 py-2 text-sm uppercase"
+              className="ui-input flex-1 uppercase"
             />
             <button
               type="button"
               disabled={c.isCheckingCode}
               onClick={() => c.applyDiscountCode(codeInput)}
-              className="rounded-md bg-neutral-900 px-4 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-50"
+              className="rounded-xl bg-brand-pink px-4 text-sm font-semibold text-white hover:brightness-105 disabled:opacity-50"
             >
               {c.isCheckingCode ? '…' : t('apply')}
             </button>
           </div>
           {c.discountError && (
-            <p className="mt-1 text-xs text-rose-600">{t(c.discountError)}</p>
+            <p className="mt-1 text-xs text-brand-red">{t(c.discountError)}</p>
           )}
         </div>
       )}
@@ -146,19 +146,19 @@ export function OrderSummary() {
               value={giftInput}
               onChange={(e) => setGiftInput(e.target.value.toUpperCase())}
               placeholder={t('gift_label')}
-              className="flex-1 rounded-md border border-neutral-300 px-3 py-2 text-sm uppercase"
+              className="ui-input flex-1 uppercase"
             />
             <button
               type="button"
               disabled={c.isCheckingGiftCard}
               onClick={() => c.applyGiftCard(giftInput)}
-              className="rounded-md bg-neutral-900 px-4 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-50"
+              className="rounded-xl bg-brand-pink px-4 text-sm font-semibold text-white hover:brightness-105 disabled:opacity-50"
             >
               {c.isCheckingGiftCard ? '…' : t('apply')}
             </button>
           </div>
           {c.giftCardError && (
-            <p className="mt-1 text-xs text-rose-600">{t(c.giftCardError)}</p>
+            <p className="mt-1 text-xs text-brand-red">{t(c.giftCardError)}</p>
           )}
         </div>
       )}

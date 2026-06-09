@@ -45,7 +45,7 @@ export function PaypalReturn() {
 
   return (
     <div className="flex flex-col items-center py-24">
-      <span className="h-8 w-8 animate-spin rounded-full border-2 border-pink-300 border-t-pink-500" />
+      <span className="h-8 w-8 animate-spin rounded-full border-2 border-brand-pinkLight border-t-brand-pink" />
       <p className="mt-4 text-sm text-neutral-600">{t('processing')}</p>
     </div>
   );

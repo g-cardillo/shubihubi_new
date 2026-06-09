@@ -44,14 +44,14 @@ export function parseInline(text: string): ReactNode[] {
     const isExternal = /^(https?:|mailto:|tel:)/.test(target);
     if (isExternal) {
       nodes.push(
-        <a key={key++} href={target} className="underline" target={target.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer">
+        <a key={key++} href={target} className="text-brand-pinkHot underline" target={target.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer">
           {parseEmphasis(label)}
         </a>,
       );
     } else {
       const href = target.startsWith('/') ? target : `/${target}`;
       nodes.push(
-        <Link key={key++} href={href} className="underline">
+        <Link key={key++} href={href} className="text-brand-pinkHot underline">
           {parseEmphasis(label)}
         </Link>,
       );

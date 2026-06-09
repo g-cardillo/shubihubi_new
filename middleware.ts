@@ -9,9 +9,14 @@ const intlMiddleware = createMiddleware(routing);
 // edge runtime e non può importare lib/auth/session.ts (server-only + Admin SDK).
 const PROTECTED = /^\/(it|en)\/profile\/.+/;
 
+// Area admin: presence-guard del cookie (il controllo del ruolo admin avviene
+// lato server in page.tsx via getServerAdmin + client AdminGuard: l'edge runtime
+// non può verificare il custom claim). Anonimi → redirect alla gate profilo.
+const ADMIN = /^\/(it|en)\/admin(?:\/.*)?$/;
+
 export default function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  const match = pathname.match(PROTECTED);
+  const match = pathname.match(PROTECTED) ?? pathname.match(ADMIN);
 
   if (match && !req.cookies.get('session')) {
     const url = req.nextUrl.clone();

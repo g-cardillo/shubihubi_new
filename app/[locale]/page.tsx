@@ -18,18 +18,18 @@ export default async function HomePage({
     <main className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
       {/* Hero */}
       <section className="py-8">
-        <p className="text-sm uppercase tracking-wide text-neutral-500">
+        <p className="text-sm font-semibold uppercase tracking-wide text-brand-pinkHot">
           {t('my_work_label')} {t('my_work_bold')}
         </p>
-        <h1 className="mt-2 text-4xl font-semibold text-neutral-900">
+        <h1 className="mt-3 font-home text-4xl font-bold text-brand-redTitle desk:text-6xl">
           {t('give_shape')} {t('ideas')}
         </h1>
-        <p className="mt-4 max-w-2xl whitespace-pre-line text-neutral-700">
+        <p className="mt-4 max-w-2xl whitespace-pre-line text-ink">
           {t('welcome')} {t('welcome_bold')}
         </p>
         <Link
           href="/shop"
-          className="mt-6 inline-block rounded-full bg-neutral-900 px-6 py-3 text-sm font-semibold text-white hover:bg-neutral-700"
+          className="mt-6 inline-block rounded-full bg-brand-pink px-7 py-3 font-semibold text-white transition-all duration-200 desk:hover:-translate-y-0.5 desk:hover:shadow-pink-cta"
         >
           {t('visit_my')} — {t('here_btn')}
         </Link>
@@ -61,10 +61,13 @@ export default async function HomePage({
       />
 
       {/* CTA Gallery */}
-      <section className="mt-12 rounded-xl bg-neutral-100 p-8 text-center">
-        <h2 className="text-2xl font-semibold text-neutral-900">{t('gallery_cta_title')}</h2>
-        <p className="mt-2 text-neutral-600">{t('gallery_cta_sub')}</p>
-        <Link href="/gallery" className="mt-4 inline-block underline">
+      <section className="mt-12 rounded-card bg-brand-cream p-8 text-center">
+        <h2 className="text-2xl font-bold text-brand-redTitle">{t('gallery_cta_title')}</h2>
+        <p className="mt-2 text-ink">{t('gallery_cta_sub')}</p>
+        <Link
+          href="/gallery"
+          className="mt-4 inline-block font-semibold text-brand-pinkHot hover:underline"
+        >
           {t('gallery_cta_title')}
         </Link>
       </section>
@@ -84,14 +87,14 @@ function Promo({
   href: string;
 }) {
   return (
-    <section className="mt-12 grid items-center gap-4 rounded-xl border border-neutral-200 p-8 sm:grid-cols-[2fr_1fr]">
+    <section className="mt-12 grid items-center gap-4 rounded-card border-2 border-brand-pinkSkin p-8 sm:grid-cols-[2fr_1fr]">
       <div>
-        <h2 className="text-2xl font-semibold text-neutral-900">{title}</h2>
-        <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-neutral-700">{body}</p>
+        <h2 className="text-2xl font-bold text-brand-redTitle">{title}</h2>
+        <p className="mt-2 whitespace-pre-line leading-relaxed text-ink">{body}</p>
       </div>
       <Link
         href={href}
-        className="inline-block justify-self-start rounded-full bg-neutral-900 px-6 py-3 text-sm font-semibold text-white hover:bg-neutral-700 sm:justify-self-end"
+        className="inline-block justify-self-start rounded-full bg-brand-pink px-6 py-3 font-semibold text-white transition-all duration-200 desk:hover:-translate-y-0.5 desk:hover:shadow-pink-cta sm:justify-self-end"
       >
         {cta}
       </Link>

@@ -7,10 +7,12 @@ import { productTitle } from '@/lib/i18n/localized';
 import { ProductBadges } from './ProductBadges';
 import { ProductPrice } from './ProductPrice';
 
+const MAX_FORMATS_INLINE = 3;
+
 /**
- * Card prodotto per la griglia shop. Server Component: link SEO-friendly verso
- * `/shop/[slug]`, immagine ottimizzata `next/image` con swap su hover
- * (seconda immagine, se presente) e badge stato.
+ * Card prodotto per la griglia shop (replica `ProductGridCard` di Flutter).
+ * Server Component: link SEO verso `/shop/[slug]`, immagine `next/image` con
+ * crossfade su hover (solo desktop ≥ desk/900px), badge stato, chip formati.
  */
 export async function ProductCard({
   product,
@@ -26,9 +28,13 @@ export async function ProductCard({
   const primary = product.imageUrls[0];
   const hover = product.imageUrls[1];
 
+  const inlineFormats = product.formats.slice(0, MAX_FORMATS_INLINE);
+  const overflow = product.formats.slice(MAX_FORMATS_INLINE);
+
   return (
     <Link href={`/shop/${product.slug}`} className="group block">
-      <div className="relative aspect-[4/5] overflow-hidden rounded-lg bg-neutral-100">
+      {/* Immagine 4/5, radius 18 */}
+      <div className="relative aspect-[4/5] overflow-hidden rounded-prod bg-black/[0.06]">
         <ProductBadges
           product={product}
           labels={{ sale: t('badge.sale'), new: t('badge.new'), limited: t('badge.limited') }}
@@ -42,7 +48,9 @@ export async function ProductCard({
               fill
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
               priority={priority}
-              className={`object-cover transition-opacity duration-300 ${hover ? 'group-hover:opacity-0' : ''}`}
+              className={`object-cover transition-all duration-200 ${
+                hover ? 'desk:group-hover:scale-[1.03] desk:group-hover:opacity-0' : ''
+              }`}
             />
             {hover && (
               <Image
@@ -50,7 +58,7 @@ export async function ProductCard({
                 alt={title}
                 fill
                 sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                className="object-cover opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                className="object-cover opacity-0 transition-opacity duration-200 desk:group-hover:opacity-100"
               />
             )}
           </>
@@ -60,21 +68,48 @@ export async function ProductCard({
           </div>
         )}
 
+        {/* Overlay sold out */}
         {product.isSoldOut && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/60">
-            <span className="rounded-full border border-neutral-900 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-neutral-900">
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-neutral-500/55">
+            <span className="rounded-full bg-black/55 px-3.5 py-2.5 text-xs font-extrabold uppercase tracking-[0.06em] text-white">
               {t('badge.soldOut')}
             </span>
           </div>
         )}
       </div>
 
-      <div className="mt-3 flex flex-col gap-1">
-        <h3 className="line-clamp-1 text-sm font-medium text-neutral-900 group-hover:underline">
-          {title}
-        </h3>
+      {/* Titolo */}
+      <h3 className="mt-2.5 line-clamp-2 text-base font-bold leading-tight text-ink">
+        {title}
+      </h3>
+
+      {/* Prezzo */}
+      <div className="mt-1.5">
         <ProductPrice product={product} />
       </div>
+
+      {/* Chip formati */}
+      {product.formats.length > 0 && (
+        <div className="mt-2.5 flex flex-wrap gap-2">
+          {inlineFormats.map((f) => (
+            <FormatChip key={f} label={f} />
+          ))}
+          {overflow.length > 0 && (
+            <FormatChip label={`+${overflow.length}`} title={overflow.join(' • ')} />
+          )}
+        </div>
+      )}
     </Link>
+  );
+}
+
+function FormatChip({ label, title }: { label: string; title?: string }) {
+  return (
+    <span
+      title={title}
+      className="rounded-full border border-black/[0.08] bg-black/[0.06] px-2.5 py-1.5 text-xs font-semibold text-ink"
+    >
+      {label}
+    </span>
   );
 }

@@ -41,10 +41,10 @@ export async function Pagination({
           key={p}
           href={hrefFor(p)}
           aria-current={p === page ? 'page' : undefined}
-          className={`min-w-9 rounded-md px-3 py-2 text-center text-sm transition ${
+          className={`min-w-9 rounded-full px-3 py-2 text-center text-sm transition ${
             p === page
-              ? 'bg-neutral-900 text-white'
-              : 'text-neutral-700 hover:bg-neutral-100'
+              ? 'bg-brand-pink text-white'
+              : 'text-ink hover:bg-brand-pinkLight/40'
           }`}
         >
           {p}

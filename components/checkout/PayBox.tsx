@@ -56,9 +56,9 @@ export function PayBox() {
 
       {/* ── Errori di validazione ──────────────────────────────────────────── */}
       {errors.length > 0 && (
-        <div className="mt-4 rounded-lg border border-rose-300 bg-rose-50 p-3">
-          <p className="text-sm font-semibold text-rose-700">{t('validation_title')}</p>
-          <ul className="mt-1 list-disc pl-5 text-xs text-rose-700">
+        <div className="mt-4 rounded-lg border border-brand-red bg-brand-red/5 p-3">
+          <p className="text-sm font-semibold text-brand-red">{t('validation_title')}</p>
+          <ul className="mt-1 list-disc pl-5 text-xs text-brand-red">
             {errors.map((e) => (
               <li key={e}>{t(e)}</li>
             ))}
@@ -71,7 +71,7 @@ export function PayBox() {
         onClick={handlePay}
         disabled={c.isPaying}
         className={`mt-4 flex h-[52px] w-full items-center justify-center rounded-full px-6 text-base font-semibold text-white transition disabled:opacity-60 ${
-          isStripe ? 'bg-pink-500 hover:bg-pink-600' : 'bg-[#0070E0] hover:bg-[#0059b3]'
+          isStripe ? 'bg-brand-pink hover:brightness-105' : 'bg-[#0070E0] hover:bg-[#0059b3]'
         }`}
       >
         {c.isPaying ? '…' : t('go_pay')}
@@ -105,7 +105,7 @@ function MethodRadio({
   return (
     <label
       className={`flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-sm ${
-        checked ? 'border-pink-400 bg-pink-50/50' : 'border-neutral-200'
+        checked ? 'border-brand-pink bg-brand-pink/5/50' : 'border-neutral-200'
       }`}
     >
       <input type="radio" checked={checked} onChange={onChange} className="h-4 w-4" />

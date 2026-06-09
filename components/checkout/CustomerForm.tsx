@@ -25,10 +25,10 @@ export function CustomerForm() {
     <div className="flex flex-col gap-3">
       {/* ── Banner profilo ───────────────────────────────────────────────── */}
       {c.profileShipping && (
-        <div className="flex items-start gap-2 rounded-xl border border-pink-300 bg-pink-50/60 p-3">
+        <div className="flex items-start gap-2 rounded-xl border border-brand-pinkLight bg-brand-pink/5 p-3">
           <span aria-hidden>📍</span>
           <div className="flex-1">
-            <p className="text-sm font-semibold text-pink-700">{t('profile_addr_banner')}</p>
+            <p className="text-sm font-semibold text-brand-pinkHot">{t('profile_addr_banner')}</p>
             <p className="text-xs text-neutral-600">
               {[
                 `${c.profileShipping.firstName} ${c.profileShipping.lastName}`.trim(),
@@ -39,7 +39,7 @@ export function CustomerForm() {
             <button
               type="button"
               onClick={c.applyProfileAddress}
-              className="mt-2 rounded-full bg-pink-500 px-4 py-1.5 text-xs font-semibold text-white hover:bg-pink-600"
+              className="mt-2 rounded-full bg-brand-pink px-4 py-1.5 text-xs font-semibold text-white hover:brightness-105"
             >
               {t('profile_addr_apply')}
             </button>
@@ -48,7 +48,7 @@ export function CustomerForm() {
             type="button"
             onClick={c.dismissProfileBanner}
             aria-label={t('remove')}
-            className="text-pink-400 hover:text-pink-600"
+            className="text-brand-pink/60 hover:text-brand-pink"
           >
             ✕
           </button>
@@ -203,11 +203,9 @@ function Input({
         type={type}
         value={value}
         onChange={onChange}
-        className={`w-full rounded-md border px-3 py-2 text-sm ${
-          error ? 'border-rose-400' : 'border-neutral-300'
-        }`}
+        className={`ui-input ${error ? 'ring-2 ring-brand-red' : ''}`}
       />
-      {error && <span className="mt-1 block text-xs text-rose-600">{error}</span>}
+      {error && <span className="mt-1 block text-xs text-brand-red">{error}</span>}
     </label>
   );
 }
@@ -229,7 +227,7 @@ function CountrySelect({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm"
+        className="ui-input"
       >
         {COUNTRY_CODES.map((code) => (
           <option key={code} value={code}>
@@ -256,7 +254,7 @@ function Checkbox({
         type="checkbox"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
-        className="h-4 w-4 rounded border-neutral-300"
+        className="h-4 w-4 rounded accent-brand-pink"
       />
       {label}
     </label>
@@ -274,7 +272,7 @@ function Radio({
 }) {
   return (
     <label className="flex items-center gap-2 text-sm text-neutral-700">
-      <input type="radio" checked={checked} onChange={onChange} className="h-4 w-4" />
+      <input type="radio" checked={checked} onChange={onChange} className="h-4 w-4 accent-brand-pink" />
       {label}
     </label>
   );

@@ -76,20 +76,20 @@ export function ProductDetail({
       <ProductGallery images={product.imageUrls} alt={title} />
 
       <div className="flex flex-col gap-6">
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center gap-2">
-            {product.isNew && <Tag className="bg-neutral-900 text-white">{t('badge.new')}</Tag>}
-            {product.isLimited && <Tag className="bg-amber-500 text-white">{t('badge.limited')}</Tag>}
+            {product.isNew && <Tag className="border border-black/10 bg-white text-black">{t('badge.new')}</Tag>}
+            {product.isLimited && <Tag className="bg-black text-white">{t('badge.limited')}</Tag>}
             {product.isSoldOut && <Tag className="bg-neutral-200 text-neutral-700">{t('badge.soldOut')}</Tag>}
           </div>
-          <h1 className="text-2xl font-semibold text-neutral-900 sm:text-3xl">
+          <h1 className="font-special text-3xl leading-tight text-brand-red sm:text-4xl">
             {title}
           </h1>
           <ProductPrice product={product} size="lg" />
         </div>
 
         {description && (
-          <p className="whitespace-pre-line text-sm leading-relaxed text-neutral-600">
+          <p className="whitespace-pre-line leading-relaxed text-brand-pinkHot">
             {description}
           </p>
         )}
@@ -113,35 +113,44 @@ export function ProductDetail({
         )}
 
         {product.corniceAvailable && (
-          <label className="flex items-center gap-2 text-sm text-neutral-700">
+          <label className="flex items-center gap-2 text-brand-pinkHot">
             <input
               type="checkbox"
               checked={frame}
               onChange={(e) => setFrame(e.target.checked)}
-              className="h-4 w-4 rounded border-neutral-300"
+              className="h-4 w-4 rounded accent-brand-pink"
             />
             {t('options.frame')}
           </label>
         )}
 
+        {/* Bottone Add-to-cart (DESIGN_SYSTEM §4.3): pill rosa, testo Genty
+            crema, chip prezzo crema, hover lift + ombra rosa (solo desktop). */}
         <button
           type="button"
           disabled={product.isSoldOut}
           onClick={handleAddToCart}
-          className="mt-2 rounded-full bg-neutral-900 px-6 py-3 text-sm font-semibold text-white transition enabled:hover:bg-neutral-700 disabled:cursor-not-allowed disabled:bg-neutral-300"
+          className="group/cta mt-2 flex min-h-[58px] items-center justify-between gap-3 rounded-full bg-brand-pink px-5 py-2.5 transition-all duration-200 enabled:desk:hover:-translate-y-0.5 enabled:desk:hover:shadow-pink-cta disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {product.isSoldOut ? t('badge.soldOut') : t('addToCart')}
+          <span className="font-special text-lg text-brand-cream2 mobile:text-xl">
+            {product.isSoldOut ? t('badge.soldOut') : t('addToCart')}
+          </span>
+          {!product.isSoldOut && (
+            <span className="rounded-full bg-brand-cream2 px-3.5 py-1 text-base font-semibold text-brand-red">
+              {product.salePriceText ?? product.priceText}
+            </span>
+          )}
         </button>
 
         {extras.length > 0 && (
-          <div className="mt-2 divide-y divide-neutral-200 border-t border-neutral-200">
+          <div className="mt-2 divide-y divide-brand-pinkLight border-t border-brand-pinkLight">
             {extras.map((e) => (
               <details key={e.key} className="group py-3">
-                <summary className="flex cursor-pointer items-center justify-between text-sm font-medium text-neutral-900">
+                <summary className="flex cursor-pointer items-center justify-between font-semibold text-ink">
                   {e.label}
-                  <span className="text-neutral-400 transition group-open:rotate-180">⌄</span>
+                  <span className="text-brand-pink transition group-open:rotate-180">⌄</span>
                 </summary>
-                <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-neutral-600">
+                <p className="mt-2 whitespace-pre-line leading-relaxed text-neutral-600">
                   {e.value}
                 </p>
               </details>
@@ -162,7 +171,7 @@ function Tag({
 }) {
   return (
     <span
-      className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${className}`}
+      className={`rounded-full px-2.5 py-1.5 text-[11px] font-extrabold uppercase tracking-wide ${className}`}
     >
       {children}
     </span>
@@ -182,17 +191,17 @@ function Selector({
 }) {
   return (
     <div className="flex flex-col gap-2">
-      <span className="text-sm font-medium text-neutral-900">{label}</span>
+      <span className="font-semibold text-ink">{label}</span>
       <div className="flex flex-wrap gap-2">
         {options.map((opt) => (
           <button
             key={opt}
             type="button"
             onClick={() => onChange(opt)}
-            className={`rounded-full border px-3 py-1.5 text-sm transition ${
+            className={`rounded-[14px] border-2 px-4 py-2 text-[15px] transition ${
               value === opt
-                ? 'border-neutral-900 bg-neutral-900 text-white'
-                : 'border-neutral-300 text-neutral-700 hover:border-neutral-500'
+                ? 'border-brand-pink bg-brand-pink/10 font-semibold text-brand-redTitle'
+                : 'border-brand-pinkSkin text-ink hover:border-brand-pink'
             }`}
           >
             {opt}

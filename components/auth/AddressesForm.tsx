@@ -82,7 +82,7 @@ export function AddressesForm() {
         <button
           type="submit"
           disabled={saving}
-          className="rounded-full bg-neutral-900 px-6 py-3 text-sm font-semibold text-white hover:bg-neutral-700 disabled:opacity-50"
+          className="rounded-full bg-brand-pink px-6 py-3 text-sm font-semibold text-white hover:brightness-105 disabled:opacity-50"
         >
           {t('save')}
         </button>
@@ -110,7 +110,7 @@ function AddressFields({
           value={value[field]}
           onChange={(e) => onChange({ ...value, [field]: e.target.value })}
           placeholder={t(field)}
-          className={`rounded-md border border-neutral-300 px-3 py-2 text-sm ${
+          className={`ui-input ${
             field === 'address' || field === 'addressNotes' ? 'sm:col-span-2' : ''
           }`}
         />

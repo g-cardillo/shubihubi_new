@@ -41,46 +41,48 @@ export function CartDrawer() {
         }`}
       />
 
-      {/* Pannello */}
+      {/* Pannello: 420px, full-width sotto 520px (DESIGN_SYSTEM §4.5) */}
       <aside
         role="dialog"
         aria-label={t('title')}
         aria-hidden={!isOpen}
-        className={`fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col bg-white shadow-xl transition-transform ${
+        className={`fixed right-0 top-0 z-50 flex h-full w-full flex-col bg-white shadow-xl transition-transform min-[520px]:w-[420px] ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        <header className="flex items-center justify-between border-b border-neutral-200 px-5 py-4">
-          <h2 className="text-lg font-semibold text-neutral-900">{t('title')}</h2>
+        <header className="flex items-center justify-between px-5 pb-2 pt-4">
+          <h2 className="font-special text-[28px] text-brand-pink">{t('title')}</h2>
           <button
             type="button"
             onClick={close}
-            className="text-sm text-neutral-500 hover:text-neutral-900"
+            aria-label={t('close')}
+            className="flex h-9 w-9 items-center justify-center rounded-full text-brand-pink hover:bg-brand-pinkLight/40"
           >
-            {t('close')}
+            ✕
           </button>
         </header>
+        <div className="h-px bg-brand-pinkLight" />
 
         {items.length === 0 ? (
-          <div className="flex flex-1 items-center justify-center px-5 text-sm text-neutral-500">
+          <div className="flex flex-1 items-center justify-center px-5 text-neutral-500">
             {t('empty')}
           </div>
         ) : (
           <>
-            <ul className="flex-1 divide-y divide-neutral-100 overflow-y-auto px-5">
+            <ul className="flex-1 divide-y divide-brand-pinkLight/60 overflow-y-auto px-5">
               {items.map((item) => (
                 <CartLine key={cartItemKey(item)} item={item} />
               ))}
             </ul>
 
-            <footer className="border-t border-neutral-200 px-5 py-4">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-neutral-600">{t('subtotal')}</span>
-                <span className="font-semibold text-neutral-900">{eur(sub)}</span>
+            <footer className="border-t border-brand-pinkLight px-5 py-4">
+              <div className="flex items-center justify-between">
+                <span className="text-[15px] font-bold text-ink">{t('subtotal')}</span>
+                <span className="text-xl font-bold text-brand-red">{eur(sub)}</span>
               </div>
               <p className="mt-2 text-xs text-neutral-500">{t('shipping_note')}</p>
               {!canCheckout && (
-                <p className="mt-2 text-xs text-amber-700">
+                <p className="mt-2 text-xs font-medium text-brand-red">
                   {t('min_order', { amount: eur(missing) })}
                 </p>
               )}
@@ -88,7 +90,7 @@ export function CartDrawer() {
                 <Link
                   href="/checkout"
                   onClick={close}
-                  className="mt-4 block w-full rounded-full bg-neutral-900 px-6 py-3 text-center text-sm font-semibold text-white transition hover:bg-neutral-700"
+                  className="mt-4 block w-full rounded-full bg-brand-pink px-6 py-3.5 text-center text-lg font-semibold text-white transition hover:brightness-105"
                 >
                   {t('checkout_btn')}
                 </Link>
@@ -96,7 +98,7 @@ export function CartDrawer() {
                 <button
                   type="button"
                   disabled
-                  className="mt-4 w-full cursor-not-allowed rounded-full bg-neutral-300 px-6 py-3 text-sm font-semibold text-white"
+                  className="mt-4 w-full cursor-not-allowed rounded-full bg-brand-pink/40 px-6 py-3.5 text-lg font-semibold text-white"
                 >
                   {t('checkout_btn')}
                 </button>
@@ -130,26 +132,26 @@ function CartLine({ item }: { item: CartItem }) {
 
   return (
     <li className="flex gap-3 py-4">
-      <div className="relative h-20 w-16 shrink-0 overflow-hidden rounded-md bg-neutral-100">
+      <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-[10px] bg-black/[0.06]">
         {item.image && (
-          <Image src={item.image} alt={item.title} fill sizes="64px" className="object-cover" />
+          <Image src={item.image} alt={item.title} fill sizes="80px" className="object-cover" />
         )}
       </div>
 
       <div className="flex flex-1 flex-col gap-1">
         <div className="flex items-start justify-between gap-2">
-          <p className="text-sm font-medium text-neutral-900">{item.title}</p>
+          <p className="text-sm font-bold text-ink">{item.title}</p>
           <button
             type="button"
             onClick={() => remove(key)}
-            className="text-xs text-neutral-400 hover:text-rose-600"
+            className="text-xs text-neutral-400 hover:text-brand-red"
           >
             {t('remove')}
           </button>
         </div>
 
         {item.soldOut && (
-          <span className="text-xs font-medium text-rose-600">{tp('badge.soldOut')}</span>
+          <span className="text-xs font-bold text-brand-red">{tp('badge.soldOut')}</span>
         )}
 
         {optionEntries.length > 0 && (
@@ -168,20 +170,20 @@ function CartLine({ item }: { item: CartItem }) {
               type="button"
               onClick={() => decrement(key)}
               disabled={item.qty <= 1}
-              className="h-6 w-6 rounded-full border border-neutral-300 text-neutral-700 disabled:opacity-40"
+              className="h-7 w-7 rounded-full border border-brand-pink text-brand-pink disabled:opacity-40"
             >
               −
             </button>
-            <span className="w-6 text-center text-sm">{item.qty}</span>
+            <span className="w-6 text-center text-sm font-semibold">{item.qty}</span>
             <button
               type="button"
               onClick={() => increment(key)}
-              className="h-6 w-6 rounded-full border border-neutral-300 text-neutral-700"
+              className="h-7 w-7 rounded-full border border-brand-pink text-brand-pink"
             >
               +
             </button>
           </div>
-          <span className="text-sm font-semibold text-neutral-900">{eur(lineTotal(item))}</span>
+          <span className="text-sm font-bold text-brand-red">{eur(lineTotal(item))}</span>
         </div>
 
         {editingNote ? (
@@ -191,7 +193,7 @@ function CartLine({ item }: { item: CartItem }) {
               onChange={(e) => setDraft(e.target.value)}
               placeholder={t('note_hint')}
               rows={2}
-              className="w-full rounded-md border border-neutral-300 p-2 text-xs"
+              className="ui-input text-xs"
             />
             <div className="mt-1 flex gap-2 text-xs">
               <button
@@ -200,7 +202,7 @@ function CartLine({ item }: { item: CartItem }) {
                   updateNote(key, draft);
                   setEditingNote(false);
                 }}
-                className="font-medium text-neutral-900"
+                className="font-semibold text-brand-pink"
               >
                 {t('note_save')}
               </button>

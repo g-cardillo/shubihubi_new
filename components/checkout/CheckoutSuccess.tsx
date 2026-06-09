@@ -76,7 +76,7 @@ export function CheckoutSuccess() {
   if (notFound || !order) {
     return (
       <div className="py-16 text-center">
-        <h1 className="text-2xl font-semibold text-rose-600">{t('order_not_found')}</h1>
+        <h1 className="text-2xl font-semibold text-brand-red">{t('order_not_found')}</h1>
         <p className="mt-2 text-sm text-neutral-500">
           {t('order_not_found_body', { id: orderId })}
         </p>
@@ -96,16 +96,16 @@ export function CheckoutSuccess() {
       <div className="text-center">
         <div
           className={`mx-auto flex h-20 w-20 items-center justify-center rounded-full text-3xl text-white ${
-            isPaid ? 'bg-pink-500' : 'bg-amber-400'
+            isPaid ? 'bg-brand-pink' : 'bg-amber-400'
           }`}
         >
           {isPaid ? '✓' : '⏳'}
         </div>
-        <h1 className="mt-5 text-3xl font-bold text-rose-600">
+        <h1 className="mt-5 text-3xl font-bold text-brand-red">
           {isPaid ? t('payment_confirmed') : t('payment_verifying')}
         </h1>
         {isPaid && firstName && (
-          <p className="mt-2 text-lg font-semibold text-pink-500">
+          <p className="mt-2 text-lg font-semibold text-brand-pink">
             {t('thank_you', { name: firstName })}
           </p>
         )}
@@ -113,21 +113,21 @@ export function CheckoutSuccess() {
           {isPaid ? t('helper_paid') : t('helper_pending')}
         </p>
         {isPaid && email && (
-          <p className="mt-1 text-sm font-medium text-pink-500">{email}</p>
+          <p className="mt-1 text-sm font-medium text-brand-pink">{email}</p>
         )}
       </div>
 
-      <div className="mt-6 rounded-xl border border-pink-200 bg-white px-4 py-3 text-sm">
-        <span className="font-bold uppercase tracking-wide text-pink-500">Order ID </span>
-        <span className="break-all text-rose-600">{orderId}</span>
+      <div className="mt-6 rounded-xl border border-brand-pinkLight bg-white px-4 py-3 text-sm">
+        <span className="font-bold uppercase tracking-wide text-brand-pink">Order ID </span>
+        <span className="break-all text-brand-red">{orderId}</span>
       </div>
 
       {isPaid && items.length > 0 && (
         <>
-          <p className="mt-5 text-xs font-bold uppercase tracking-wide text-pink-500">
+          <p className="mt-5 text-xs font-bold uppercase tracking-wide text-brand-pink">
             {t('items_count', { count: items.length })}
           </p>
-          <ul className="mt-2 divide-y divide-pink-100 rounded-2xl border border-pink-200 bg-white">
+          <ul className="mt-2 divide-y divide-pink-100 rounded-2xl border border-brand-pinkLight bg-white">
             {items.map((it, i) => (
               <li key={i} className="flex items-start gap-3 p-3">
                 <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-neutral-100">
@@ -136,14 +136,14 @@ export function CheckoutSuccess() {
                   )}
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm font-semibold text-rose-600">
+                  <p className="text-sm font-semibold text-brand-red">
                     {it.title ?? t('order_product_fallback')}
                   </p>
                   {it.note && <p className="text-xs italic text-neutral-500">{it.note}</p>}
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-pink-500">×{it.qty ?? 1}</p>
-                  <p className="text-sm font-bold text-rose-600">
+                  <p className="text-xs text-brand-pink">×{it.qty ?? 1}</p>
+                  <p className="text-sm font-bold text-brand-red">
                     {money(it.lineTotalCents ?? 0, currency)}
                   </p>
                 </div>
@@ -154,7 +154,7 @@ export function CheckoutSuccess() {
       )}
 
       {isPaid && (
-        <div className="mt-3 flex items-center justify-between rounded-2xl bg-pink-500 px-5 py-4 text-white">
+        <div className="mt-3 flex items-center justify-between rounded-2xl bg-brand-pink px-5 py-4 text-white">
           <span className="font-semibold">{t('total_label')}</span>
           <span className="text-xl font-bold">{money(order.amountCents ?? 0, currency)}</span>
         </div>
@@ -166,14 +166,14 @@ export function CheckoutSuccess() {
 }
 
 function CenteredMessage({ text }: { text: string }) {
-  return <p className="py-24 text-center text-sm text-pink-500">{text}</p>;
+  return <p className="py-24 text-center text-sm text-brand-pink">{text}</p>;
 }
 
 function GoShopButton({ label }: { label: string }) {
   return (
     <Link
       href="/shop"
-      className="mt-9 inline-flex h-[52px] w-full items-center justify-center rounded-full bg-pink-500 px-6 text-base font-semibold text-white hover:bg-pink-600"
+      className="mt-9 inline-flex h-[52px] w-full items-center justify-center rounded-full bg-brand-pink px-6 text-base font-semibold text-white hover:brightness-105"
     >
       {label}
     </Link>

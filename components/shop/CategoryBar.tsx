@@ -27,14 +27,14 @@ export async function CategoryBar({
               <Link
                 href={c.value ? `/shop?cat=${encodeURIComponent(c.value)}` : '/shop'}
                 aria-current={isActive ? 'page' : undefined}
-                className={`whitespace-nowrap rounded-full border px-4 py-1.5 text-sm font-medium transition ${
+                className={`whitespace-nowrap rounded-full border-2 px-4 py-1.5 text-sm font-medium transition ${
                   isActive
-                    ? 'border-neutral-900 bg-neutral-900 text-white'
-                    : 'border-neutral-200 text-neutral-700 hover:border-neutral-400'
+                    ? 'border-brand-pink bg-brand-pink text-white'
+                    : 'border-brand-pinkSkin text-ink hover:border-brand-pink'
                 }`}
               >
                 {label}
-                <span className={isActive ? 'text-neutral-300' : 'text-neutral-400'}>
+                <span className={isActive ? 'text-white/70' : 'text-neutral-400'}>
                   {' '}
                   {c.count}
                 </span>
