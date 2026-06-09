@@ -4,6 +4,9 @@ import { setRequestLocale, getTranslations } from 'next-intl/server';
 import type { Locale } from '@/i18n/routing';
 import { Link } from '@/i18n/navigation';
 import { LpTestimonials, type LpReview } from '@/components/live-painting/LpTestimonials';
+import { WhySection } from '@/components/shared/WhySection';
+import { CtaBanner } from '@/components/shared/CtaBanner';
+import { StarburstBadge } from '@/components/shared/StarburstBadge';
 
 export async function generateMetadata({
   params,
@@ -119,28 +122,12 @@ export default async function LivePaintingPage({
       </section>
 
       {/* ── 3. PERCHÉ scegliere ───────────────────────────────────────────── */}
-      <section
-        className="bg-[#F4E8B8] px-4 py-[72px] desk:px-10 desk:py-[120px]"
-        style={{ backgroundImage: "url('/pattern/10.webp')", backgroundRepeat: 'repeat' }}
-      >
-        <div className="relative mx-auto max-w-[1350px]">
-          <div className="mt-9 rounded-[28px] bg-white px-[22px] pb-7 pt-[60px] desk:mt-14 desk:rounded-[40px] desk:px-[70px] desk:pb-[46px] desk:pt-[82px]">
-            <div className="px-0 py-5 wide:px-[100px]">
-              <h2 className="max-w-[980px] whitespace-pre-line font-title text-[42px] leading-[0.95] text-brand-pink desk:text-[78px]">
-                {t('why_subtitle')}
-              </h2>
-              <div className="mt-[18px] max-w-[980px] desk:mt-7">
-                <WhyPoint text={t('why_1')} />
-                <WhyPoint text={t('why_2')} />
-                <WhyPoint text={t('why_3')} />
-              </div>
-            </div>
-          </div>
-          <span className="absolute left-[18px] top-0 font-special text-[64px] leading-[0.9] text-brand-red desk:left-10 desk:text-[116px]">
-            {t('why_title')}
-          </span>
-        </div>
-      </section>
+      <WhySection
+        patternSrc="/pattern/10.webp"
+        title={t('why_title')}
+        subtitle={t('why_subtitle')}
+        points={[t('why_1'), t('why_2'), t('why_3')]}
+      />
 
       {/* ── 4. PRICING ────────────────────────────────────────────────────── */}
       <section className="bg-white px-[18px] py-9 desk:px-[60px] desk:py-[70px]">
@@ -160,19 +147,7 @@ export default async function LivePaintingPage({
       </section>
 
       {/* ── 5. CONTACT CTA ────────────────────────────────────────────────── */}
-      <section className="bg-brand-pinkHot px-6 py-10 desk:px-[60px] desk:py-16">
-        <div className="mx-auto max-w-content">
-          <p className="font-title text-[28px] leading-tight text-brand-cream2 desk:text-[52px]">
-            {t('cta_text')}
-          </p>
-          <Link
-            href="/contacts"
-            className="mt-7 inline-block rounded-full bg-brand-pinkBright px-7 py-3.5 font-special text-[26px] text-brand-cream2 transition-all duration-200 desk:mt-10 desk:px-9 desk:py-[18px] desk:text-[32px] desk:hover:-translate-y-0.5 desk:hover:shadow-lift"
-          >
-            {t('cta_btn')}
-          </Link>
-        </div>
-      </section>
+      <CtaBanner text={t('cta_text')} btnLabel={t('cta_btn')} href="/contacts" />
 
       {/* ── 6. TESTIMONIAL ────────────────────────────────────────────────── */}
       <section
@@ -248,29 +223,6 @@ function AboutText({
   );
 }
 
-/** Punto "Perché" con bullet ✦ e parsing di **grassetto** (replica `WhyPoint`). */
-function WhyPoint({ text }: { text: string }) {
-  const parts = text.split('**');
-  return (
-    <div className="mb-2.5 flex items-start gap-2.5 desk:mb-3.5 desk:gap-3.5">
-      <span className="mt-0.5 font-body text-[18px] font-extrabold text-brand-red desk:mt-1 desk:text-[28px]">
-        ✦
-      </span>
-      <p className="font-body text-[18px] font-medium leading-snug text-brand-red desk:text-[27px]">
-        {parts.map((p, i) =>
-          i % 2 === 1 ? (
-            <strong key={i} className="font-extrabold">
-              {p}
-            </strong>
-          ) : (
-            <span key={i}>{p}</span>
-          ),
-        )}
-      </p>
-    </div>
-  );
-}
-
 function PriceCard({
   title,
   price,
@@ -302,37 +254,6 @@ function PriceCard({
       {badge && <StarburstBadge label={badge} />}
     </div>
   );
-}
-
-/** Badge a stella rossa "Il più completo e richiesto!" (replica `_LpStarburstPainter`). */
-function StarburstBadge({ label }: { label: string }) {
-  return (
-    <div className="absolute -bottom-12 -right-3 h-[130px] w-[130px] desk:-bottom-12 desk:-right-10 desk:h-[170px] desk:w-[170px]">
-      <svg viewBox="0 0 200 200" className="h-full w-full drop-shadow-sm">
-        <polygon points={starburstPoints(100, 100, 100, 78, 14)} fill="#E01919" />
-      </svg>
-      <span className="absolute inset-0 grid rotate-[20deg] place-items-center px-3 text-center font-body text-[13px] font-bold leading-tight text-white desk:text-[18px]">
-        {label}
-      </span>
-    </div>
-  );
-}
-
-/** Genera i vertici di una stella a `points` punte (outer/inner radius). */
-function starburstPoints(
-  cx: number,
-  cy: number,
-  outerR: number,
-  innerR: number,
-  points: number,
-): string {
-  const verts: string[] = [];
-  for (let i = 0; i < points * 2; i++) {
-    const r = i % 2 === 0 ? outerR : innerR;
-    const angle = (i * Math.PI) / points - Math.PI / 2;
-    verts.push(`${(cx + r * Math.cos(angle)).toFixed(2)},${(cy + r * Math.sin(angle)).toFixed(2)}`);
-  }
-  return verts.join(' ');
 }
 
 function BomboniereColumn({
