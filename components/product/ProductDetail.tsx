@@ -162,16 +162,15 @@ export function ProductDetail({
           ))}
         </ul>
 
-        {/* Selettore colore (V3) — mini-anteprime */}
+        {/* Selettore colore — pastiglie circolari col colore reale (parità Flutter) */}
         {hasColors && (
           <div>
             <FieldLabel>{t('options.color')}</FieldLabel>
             <div className="flex flex-wrap gap-2.5">
-              {product.colors.map((c, i) => (
-                <ColorThumb
+              {product.colors.map((c) => (
+                <ColorSwatch
                   key={c}
                   label={c}
-                  image={product.imageUrls[i] ?? product.imageUrls[0]}
                   selected={color === c}
                   onClick={() => setColor(c)}
                 />
@@ -297,17 +296,34 @@ function FormatChip({
   );
 }
 
-function ColorThumb({
+/**
+ * Pastiglia colore — replica il color selector del Flutter
+ * (`ProductDetailView.dart`): cerchio 36×36 col colore reale parsato dalla
+ * stringa. Selezionato → bordo 3px rosa + spunta (rossa su colore chiaro,
+ * bianca su scuro). Colore sconosciuto → pattern a scacchi pixelato.
+ */
+function ColorSwatch({
   label,
-  image,
   selected,
   onClick,
 }: {
   label: string;
-  image?: string;
   selected: boolean;
   onClick: () => void;
 }) {
+  const swatch = parseProductColor(label);
+  const isLight = swatch ? isLightColor(swatch) : true;
+  // Per il colore sconosciuto: pattern a scacchi 4px (come `_PixelPatternPainter`).
+  const checker: React.CSSProperties = {
+    backgroundColor: '#EEEEEE',
+    backgroundImage:
+      'linear-gradient(45deg, #BBBBBB 25%, transparent 25%), linear-gradient(-45deg, #BBBBBB 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #BBBBBB 75%), linear-gradient(-45deg, transparent 75%, #BBBBBB 75%)',
+    backgroundSize: '8px 8px',
+    backgroundPosition: '0 0, 0 4px, 4px -4px, -4px 0',
+  };
+  // Spunta: rossa su sfondo chiaro / sconosciuto, bianca su scuro.
+  const checkColor = swatch ? (isLight ? '#D20001' : '#FFFFFF') : '#D20001';
+
   return (
     <button
       type="button"
@@ -315,23 +331,94 @@ function ColorThumb({
       aria-label={label}
       aria-pressed={selected}
       title={label}
-      className={`relative block h-[76px] w-[76px] rounded-[14px] border-2 bg-white p-1 transition ${
-        selected
-          ? 'border-brand-pink'
-          : 'border-brand-pinkSkin hover:border-brand-pink'
+      className={`grid h-9 w-9 place-items-center rounded-full transition ${
+        selected ? 'border-[3px] border-brand-pink' : 'border-[1.5px] border-brand-pinkSkin'
       }`}
+      style={swatch ? { backgroundColor: swatch } : checker}
     >
-      <span
-        className="block h-full w-full rounded-[10px] bg-cover bg-center"
-        style={image ? { backgroundImage: `url('${image}')` } : undefined}
-      />
       {selected && (
-        <span className="absolute -bottom-1.5 -right-1.5 grid h-5 w-5 place-items-center rounded-full bg-brand-pink text-[11px] font-black text-white">
-          ✓
-        </span>
+        <svg
+          viewBox="0 0 24 24"
+          className="h-4 w-4"
+          fill="none"
+          stroke={checkColor}
+          strokeWidth={3}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M5 12l5 5L20 6" />
+        </svg>
       )}
     </button>
   );
+}
+
+/**
+ * Converte la stringa colore di un prodotto in un colore CSS, o `null` se
+ * sconosciuto (→ pattern a scacchi). Replica `_parseProductColor` del Flutter:
+ * accetta hex #RGB / #RRGGBB / #RRGGBBAA e una mappa di nomi IT/EN.
+ */
+function parseProductColor(s: string): string | null {
+  const t = s.trim();
+
+  if (t.startsWith('#')) {
+    const hex = t.slice(1).replace(/\s/g, '');
+    if (/^[0-9a-fA-F]{3}$/.test(hex)) {
+      return `#${hex[0]}${hex[0]}${hex[1]}${hex[1]}${hex[2]}${hex[2]}`;
+    }
+    if (/^[0-9a-fA-F]{6}$/.test(hex)) return `#${hex}`;
+    if (/^[0-9a-fA-F]{8}$/.test(hex)) {
+      // Flutter usa ARGB; CSS usa RRGGBBAA → sposto l'alpha in coda.
+      const a = hex.slice(0, 2);
+      const rgb = hex.slice(2);
+      return `#${rgb}${a}`;
+    }
+  }
+
+  const names: Record<string, string> = {
+    rosso: '#E53935', red: '#E53935',
+    rosa: '#F48FB1', pink: '#F48FB1',
+    fucsia: '#E91E8C', fuchsia: '#E91E8C',
+    arancione: '#FF7043', orange: '#FF7043',
+    giallo: '#FFD600', yellow: '#FFD600',
+    verde: '#43A047', green: '#43A047',
+    azzurro: '#29B6F6', celeste: '#29B6F6',
+    blu: '#1E88E5', blue: '#1E88E5',
+    indaco: '#3949AB', indigo: '#3949AB',
+    viola: '#8E24AA', purple: '#8E24AA',
+    lilla: '#BA68C8',
+    marrone: '#6D4C41', brown: '#6D4C41',
+    beige: '#F5F5DC',
+    grigio: '#757575', gray: '#757575', grey: '#757575',
+    bianco: '#FFFFFF', white: '#FFFFFF',
+    nero: '#212121', black: '#212121',
+    crema: '#FFF8E1', cream: '#FFF8E1',
+    corallo: '#FF7F7F', coral: '#FF7F7F',
+    turchese: '#26C6DA', turquoise: '#26C6DA',
+    oro: '#FFD700', gold: '#FFD700',
+    argento: '#C0C0C0', silver: '#C0C0C0',
+  };
+
+  return names[t.toLowerCase()] ?? null;
+}
+
+/**
+ * Stima se un colore è "chiaro", per scegliere il colore della spunta.
+ * Replica `ThemeData.estimateBrightnessForColor`: luminanza relativa WCAG,
+ * soglia `(L + 0.05)^2 > 0.15`.
+ */
+function isLightColor(hex: string): boolean {
+  const h = hex.replace('#', '').slice(0, 6);
+  const toLin = (v: number) => {
+    const c = v / 255;
+    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  };
+  const r = toLin(parseInt(h.slice(0, 2), 16));
+  const g = toLin(parseInt(h.slice(2, 4), 16));
+  const b = toLin(parseInt(h.slice(4, 6), 16));
+  const L = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  return (L + 0.05) * (L + 0.05) > 0.15;
 }
 
 function QtyStepper({
