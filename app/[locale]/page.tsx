@@ -4,6 +4,7 @@ import type { Locale } from '@/i18n/routing';
 import { Link } from '@/i18n/navigation';
 import { getLatest } from '@/lib/products/repository';
 import { ProductGrid } from '@/components/product/ProductGrid';
+import { VimeoHero } from '@/components/home/VimeoHero';
 
 /**
  * Home page — replica fedele di `lib/features/home/presentation/pages/home.dart`.
@@ -28,14 +29,7 @@ export default async function HomePage({
     <>
       {/* ── Hero: video Vimeo fullscreen + titolo sovrapposto ─────────────── */}
       <section className="relative h-[62vh] w-full overflow-hidden desk:h-[74vh]">
-        <div className="pointer-events-none absolute inset-0">
-          <iframe
-            src="https://player.vimeo.com/video/1177430062?autoplay=1&muted=1&loop=1&background=1&autopause=0"
-            allow="autoplay; fullscreen; picture-in-picture"
-            className="absolute left-1/2 top-1/2 h-[56.25vw] min-h-full w-[177.78vh] min-w-full -translate-x-1/2 -translate-y-1/2 border-0"
-            title="Shubi Hubi Studio"
-          />
-        </div>
+        <VimeoHero videoId="1177430062" title="Shubi Hubi Studio" />
         <div className="absolute inset-0 bg-black/[0.12]" />
         <h1 className="absolute inset-x-3 bottom-0 text-center font-home text-[62px] font-light leading-[0.88] tracking-[0.06em] text-white desk:inset-x-6 desk:text-[126px]">
           Shubi Hubi Studio

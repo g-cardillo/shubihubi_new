@@ -69,7 +69,7 @@ export default async function ContactsPage({
       </section>
 
       {/* ── 2. FAQ (sfondo crema) ─────────────────────────────────────────── */}
-      <section className="bg-brand-cream px-6 py-16 desk:px-[60px] desk:py-24">
+      <section id="faq" className="scroll-mt-24 bg-brand-cream px-6 py-16 desk:px-[60px] desk:py-24">
         <div className="mx-auto flex max-w-content flex-col gap-16">
           {GROUPS.map((g) => (
             <div key={g.titleKey}>

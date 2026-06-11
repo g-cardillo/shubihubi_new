@@ -5,6 +5,8 @@ import { setRequestLocale } from 'next-intl/server';
 import { routing } from '@/i18n/routing';
 import { CartProvider } from '@/components/cart/CartProvider';
 import { AuthProvider } from '@/lib/auth/AuthProvider';
+import { CookieConsentProvider } from '@/lib/cookies/CookieConsentProvider';
+import { CookieBanner } from '@/components/cookie/CookieBanner';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { fontVariables } from '../fonts';
@@ -43,11 +45,14 @@ export default async function LocaleLayout({
         <NextIntlClientProvider>
           <AuthProvider>
             <CartProvider>
-              <div className="flex min-h-screen flex-col">
-                <Navbar />
-                <main className="flex-1">{children}</main>
-                <Footer />
-              </div>
+              <CookieConsentProvider>
+                <div className="flex min-h-screen flex-col">
+                  <Navbar />
+                  <main className="flex-1">{children}</main>
+                  <Footer />
+                </div>
+                <CookieBanner />
+              </CookieConsentProvider>
             </CartProvider>
           </AuthProvider>
         </NextIntlClientProvider>

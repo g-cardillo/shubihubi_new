@@ -214,7 +214,10 @@
     "contacts": "Contatti",
     "faq": "Domande frequenti",
     "support_orders": "Supporto ordini",
-    "cookie_preferences": "Gestisci preferenze cookie"
+    "cookie_preferences": "Gestisci preferenze cookie",
+    "terms_link": "Termini & Condizioni",
+    "shipping_link": "Spedizione & Acquisto",
+    "privacy_link": "Informativa sulla privacy"
   },
   "about": {
     "banner": "Ciao, è un piacere conoscerti!",
@@ -804,7 +807,35 @@
   "support": {
     "title": "Supporto",
     "intro": "Hai bisogno di aiuto con un ordine o una richiesta? Scrivici tramite il modulo di supporto o inviaci una mail: ti risponderemo il prima possibile.",
-    "email_cta": "Scrivici a"
+    "email_cta": "Scrivici a",
+    "form_title": "Supporto ordini",
+    "form_subtitle": "Compila il modulo e ti risponderemo il prima possibile.",
+    "form_email_confirm_label": "Conferma email *",
+    "err_email_confirm": "Conferma la tua email",
+    "form_order_label": "Numero dell'ordine *",
+    "form_order_label_optional": "Numero dell'ordine",
+    "form_order_hint": "Es. ORD-12345",
+    "err_order": "Inserisci il numero dell'ordine",
+    "form_reason_label": "Perché mi scrivi *",
+    "form_reason_hint": "Seleziona un motivo",
+    "err_reason": "Seleziona un motivo",
+    "form_return_reason_label": "Motivo del reso",
+    "form_return_reason_hint": "Seleziona il motivo del reso",
+    "form_message_hint": "Descrivi il problema o la tua richiesta...",
+    "form_submit": "Invia richiesta",
+    "form_photo_label": "Foto del danno (opzionale)",
+    "form_photo_add": "Aggiungi",
+    "form_photo_max": "Puoi allegare fino a 5 foto",
+    "reason_lost": "Il mio ordine è stato smarrito",
+    "reason_return": "Desidero effettuare un reso",
+    "reason_damaged": "Il prodotto è danneggiato",
+    "reason_modify": "Vorrei modificare il mio ordine",
+    "reason_no_email": "Non ho ricevuto la mail di conferma",
+    "reason_special": "Ho una richiesta particolare da allegare al mio ordine",
+    "reason_other": "Altro",
+    "return_reason_damaged": "Il prodotto è danneggiato",
+    "return_reason_wrong": "Il prodotto è sbagliato",
+    "return_reason_other": "Altro"
   },
   "wishlist": {
     "title": "Wishlist",
@@ -953,5 +984,25 @@
     "form_legal_post": ".",
     "lastname_label": "Cognome",
     "lastname_hint": "Il tuo cognome"
+  },
+  "cookieBanner": {
+    "title": "Preferenze cookie",
+    "body": "Utilizziamo cookie tecnici necessari al corretto funzionamento del sito. Con il tuo consenso possiamo utilizzare anche cookie opzionali di analisi, profilazione e marketing.",
+    "policy_link": "Informativa sulla privacy",
+    "accept_all": "Accetta tutti",
+    "accept_necessary": "Solo necessari",
+    "customize": "Personalizza",
+    "close_hint": "Chiudendo accetti tutti i cookie",
+    "pref_title": "Gestione preferenze cookie",
+    "pref_manage_desc": "Puoi modificare le tue preferenze cookie in qualsiasi momento.",
+    "pref_save": "Salva preferenze",
+    "pref_close": "Chiudi senza salvare",
+    "pref_always_on": "Sempre attivi",
+    "pref_necessary_title": "Cookie tecnici necessari",
+    "pref_necessary_desc": "Sempre attivi. Necessari per navigazione, login, carrello, checkout e sicurezza.",
+    "pref_analytics_title": "Cookie analitici",
+    "pref_analytics_desc": "Opzionali. Ci aiutano a capire come viene utilizzato il sito per migliorarne le prestazioni.",
+    "pref_marketing_title": "Cookie di profilazione e marketing",
+    "pref_marketing_desc": "Opzionali. Usati per personalizzare la tua esperienza e proporti contenuti rilevanti."
   }
 }

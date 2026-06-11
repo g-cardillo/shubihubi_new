@@ -1,11 +1,15 @@
 import { getTranslations } from 'next-intl/server';
 import { RichText } from './RichText';
 
+// Fascia hero a righe verticali crema/rosa (stesso pattern di Gallery/Events).
+const STRIPES =
+  'repeating-linear-gradient(to right, rgba(238,103,171,0.22) 0 2px, transparent 2px 22px)';
+
 /**
  * Renderer per le pagine legali (Cookie Policy, Shipping, Terms).
  * Riceve il namespace i18n e la sequenza ordinata di chiavi (così come
  * appaiono nella pagina Flutter originale) e le classifica per suffisso:
- *  - prima chiave            → titolo pagina (h1)
+ *  - prima chiave            → titolo pagina (hero Genty rosa su righe)
  *  - 'effective_date'        → sottotitolo (data di efficacia)
  *  - *_title                 → titolo di sezione (h2)
  *  - *_b{n} / *_rb{n}        → punto elenco (raggruppati in <ul>)
@@ -37,7 +41,11 @@ export async function LegalArticle({
     bullets = [];
   };
 
+  // La prima chiave è il titolo pagina: va nella fascia hero, non nell'articolo.
+  const pageTitle = t(keys[0]);
+
   keys.forEach((key, i) => {
+    if (i === 0) return;
     const isBullet = /r?b\d+$/.test(key);
     if (isBullet) {
       bullets.push(key);
@@ -46,13 +54,7 @@ export async function LegalArticle({
     flushBullets();
 
     const value = t(key);
-    if (i === 0) {
-      blocks.push(
-        <h1 key={key} className="text-3xl font-semibold text-neutral-900">
-          {value}
-        </h1>,
-      );
-    } else if (key === 'effective_date') {
+    if (key === 'effective_date') {
       blocks.push(
         <p key={key} className="mb-6 text-sm text-neutral-500">
           {value}
@@ -81,8 +83,19 @@ export async function LegalArticle({
   flushBullets();
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
-      <article>{blocks}</article>
-    </main>
+    <>
+      {/* Hero: titolo Genty rosa su fascia a righe verticali (come Flutter). */}
+      <section
+        className="flex min-h-[220px] items-center justify-center px-4 py-10 desk:min-h-[300px]"
+        style={{ backgroundColor: '#FFFDE7', backgroundImage: STRIPES }}
+      >
+        <h1 className="text-center font-special text-[44px] leading-[1.05] text-brand-pink desk:text-[72px]">
+          {pageTitle}
+        </h1>
+      </section>
+      <main className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
+        <article>{blocks}</article>
+      </main>
+    </>
   );
 }

@@ -214,7 +214,10 @@
     "contacts": "Contacts",
     "faq": "FAQ",
     "support_orders": "Order support",
-    "cookie_preferences": "Manage cookie preferences"
+    "cookie_preferences": "Manage cookie preferences",
+    "terms_link": "Terms & Conditions",
+    "shipping_link": "Shipping & Purchase",
+    "privacy_link": "Privacy Policy"
   },
   "about": {
     "banner": "Hello, lovely to meet you!",
@@ -804,7 +807,35 @@
   "support": {
     "title": "Support",
     "intro": "Need help with an order or a request? Write to us through the support form or send us an email: we will get back to you as soon as possible.",
-    "email_cta": "Write to us at"
+    "email_cta": "Write to us at",
+    "form_title": "Order Support",
+    "form_subtitle": "Fill in the form and we will get back to you as soon as possible.",
+    "form_email_confirm_label": "Confirm email *",
+    "err_email_confirm": "Please confirm your email",
+    "form_order_label": "Order number *",
+    "form_order_label_optional": "Order number",
+    "form_order_hint": "E.g. ORD-12345",
+    "err_order": "Please enter your order number",
+    "form_reason_label": "What can I help you with? *",
+    "form_reason_hint": "Select a reason",
+    "err_reason": "Please select a reason",
+    "form_return_reason_label": "Return reason",
+    "form_return_reason_hint": "Select return reason",
+    "form_message_hint": "Describe your issue or request...",
+    "form_submit": "Send request",
+    "form_photo_label": "Damage photos (optional)",
+    "form_photo_add": "Add",
+    "form_photo_max": "You can attach up to 5 photos",
+    "reason_lost": "My order has been lost",
+    "reason_return": "I would like to make a return",
+    "reason_damaged": "The product is damaged",
+    "reason_modify": "I would like to modify my order",
+    "reason_no_email": "I did not receive the confirmation email",
+    "reason_special": "I have a special request for my order",
+    "reason_other": "Other",
+    "return_reason_damaged": "The product is damaged",
+    "return_reason_wrong": "The product is wrong",
+    "return_reason_other": "Other"
   },
   "wishlist": {
     "title": "Wishlist",
@@ -953,5 +984,25 @@
     "form_legal_post": ".",
     "lastname_label": "Last name",
     "lastname_hint": "Your last name"
+  },
+  "cookieBanner": {
+    "title": "Cookie preferences",
+    "body": "We use technically necessary cookies to ensure the correct functioning of the site. With your consent, we may also use optional analytics, profiling and marketing cookies.",
+    "policy_link": "Privacy Policy",
+    "accept_all": "Accept all",
+    "accept_necessary": "Only necessary",
+    "customize": "Customize",
+    "close_hint": "Closing accepts all cookies",
+    "pref_title": "Manage cookie preferences",
+    "pref_manage_desc": "You can change your cookie preferences at any time.",
+    "pref_save": "Save preferences",
+    "pref_close": "Close without saving",
+    "pref_always_on": "Always on",
+    "pref_necessary_title": "Technically necessary cookies",
+    "pref_necessary_desc": "Always active. Required for navigation, login, cart, checkout and security.",
+    "pref_analytics_title": "Analytics cookies",
+    "pref_analytics_desc": "Optional. Help us understand how the site is used to improve its performance.",
+    "pref_marketing_title": "Profiling and marketing cookies",
+    "pref_marketing_desc": "Optional. Used to personalise your experience and suggest relevant content."
   }
 }

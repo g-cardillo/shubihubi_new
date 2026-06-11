@@ -13,6 +13,7 @@ import {
 import { useCartStore } from '@/lib/cart/store';
 import { subtotal as cartSubtotal } from '@/lib/types/cart';
 import { useAuth } from '@/lib/auth/AuthProvider';
+import { useMailingList } from '@/lib/hooks/useMailingList';
 import { loadAddresses, type UserAddress } from '@/lib/profile/firestore';
 import { computeShippingCost } from '@/lib/checkout/shipping';
 import { isEuCountry, type InvoiceType, type PayMethod } from '@/lib/checkout/constants';
@@ -126,6 +127,7 @@ const CheckoutContext = createContext<CheckoutContextValue | null>(null);
 
 export function CheckoutProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
+  const { addEmail } = useMailingList();
   const items = useCartStore((s) => s.items);
   const availableItems = useMemo(() => items.filter((i) => !i.soldOut), [items]);
 
@@ -396,10 +398,14 @@ export function CheckoutProvider({ children }: { children: ReactNode }) {
     if (isPaying) return;
     setIsPaying(true);
     try {
-      const id = await createDraftOrder(buildPayload());
+      const payload = buildPayload();
+      const id = await createDraftOrder(payload);
       if (!id) {
         throw new Error('order_create_failed');
       }
+      // Best-effort mailing list (gated dal consenso marketing), come il
+      // `checkout_controller` del Flutter (`source: 'checkout'`).
+      void addEmail(payload.customer.email, 'checkout');
       if (method === 'stripe') {
         const url = await createStripeCheckoutSession(id);
         window.location.href = url;
@@ -411,7 +417,7 @@ export function CheckoutProvider({ children }: { children: ReactNode }) {
       // Se il redirect non parte (errore), riabilita il bottone.
       setIsPaying(false);
     }
-  }, [isPaying, buildPayload, method]);
+  }, [isPaying, buildPayload, method, addEmail]);
 
   const value: CheckoutContextValue = {
     form,

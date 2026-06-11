@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
+import { useMailingList } from '@/lib/hooks/useMailingList';
 
 const CLOUD_FN = 'https://us-central1-shubihubi.cloudfunctions.net/contactForm';
 const PREFIXES = ['+39', '+1', '+44', '+33', '+34', '+49', '+41'];
@@ -20,6 +21,7 @@ const PILL =
  */
 export function ContactForm() {
   const t = useTranslations('contactForm');
+  const { addEmail } = useMailingList();
 
   const [f, setF] = useState({
     name: '',
@@ -95,6 +97,9 @@ export function ContactForm() {
         body: JSON.stringify(payload),
       });
       if (resp.ok) {
+        // Best-effort: aggiunge l'email alla mailing list (gated dal consenso
+        // marketing), come `MailingListService` del Flutter.
+        void addEmail(f.email, 'contact_form');
         setStatus({ ok: true, text: t('form_success') });
         setF({
           name: '', lastName: '', email: '', emailConfirm: '', yourLocation: '',

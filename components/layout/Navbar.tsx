@@ -58,13 +58,14 @@ const SUBPAGE_HREFS = ['/live-painting', '/stationery'];
  * `NavigationMenu`):
  *  - `'overlayScroll'` (Home): navbar in overlay sull'hero, sfondo
  *    trasparente → bianco e testo bianco → scuro in base allo scroll.
- *  - `'overlayDark'` (Gallery, About, Live Painting, Stationery): overlay con
- *    sfondo trasparente → bianco a scroll, ma testo SEMPRE scuro.
- *  - `'solid'` (Shop, Contacts e tutto il resto): sfondo bianco fisso, testo
- *    scuro. (`Events` nel Flutter è scroll-based, ma qui è ancora uno stub
- *    senza hero → resta solido per non avere testo bianco su bianco.)
+ *  - `'overlayDark'` (Gallery, About): overlay con sfondo trasparente → bianco
+ *    a scroll, ma testo SEMPRE scuro.
+ *  - `'solid'` (Shop, Contacts, Live Painting, Stationery e tutto il resto):
+ *    sfondo bianco fisso, testo scuro. (`Events` nel Flutter è scroll-based,
+ *    ma qui ha un hero chiaro a righe → resta solido, il testo scuro è
+ *    leggibile.)
  */
-const OVERLAY_DARK_TEXT = ['/gallery', '/about', '/live-painting', '/stationery'];
+const OVERLAY_DARK_TEXT = ['/gallery', '/about'];
 /** Distanza di scroll (px) per il fade completo, come `fadeDistance` Flutter. */
 const NAV_FADE = 160;
 
@@ -87,24 +88,8 @@ export function Navbar() {
   const hydrated = useCartStore((s) => s.hydrated);
   const count = useCartStore((s) => totalQty(s.items));
 
-  // Schermo piccolo (< breakpoint `desk` = 900px).
-  const [compact, setCompact] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia('(max-width: 899.98px)');
-    const update = () => setCompact(mq.matches);
-    update();
-    mq.addEventListener('change', update);
-    return () => mq.removeEventListener('change', update);
-  }, []);
-
   // Modalità navbar in base alla rotta + progressione di scroll [0..1].
-  // Eccezione: su schermo piccolo Live Painting e Stationery hanno la barra
-  // sempre bianca (solid), non l'overlay trasparente.
-  const baseMode = navModeFor(pathname);
-  const mode: NavMode =
-    compact && (pathname === '/live-painting' || pathname === '/stationery')
-      ? 'solid'
-      : baseMode;
+  const mode = navModeFor(pathname);
   const overlay = mode !== 'solid';
   const scrollText = mode === 'overlayScroll';
   const [scrollT, setScrollT] = useState(0);
