@@ -83,6 +83,12 @@ export function mapProduct(
     type: macroId,
     categories: toStringArray(data.categories),
 
+    categoryDescription_it: str(data.categoryDescription_it) || undefined,
+    categoryDescription_eng: str(data.categoryDescription_eng) || undefined,
+    subcategory: str(data.subcategory) || undefined,
+    userFilters: toStringArray(data.userFilters),
+    searchFilters: toStringArray(data.searchFilters),
+
     price,
     salePrice,
     priceText: str(data.priceText, '€ --'),

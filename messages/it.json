@@ -20,6 +20,11 @@
     "allCategories": "Tutti",
     "resultsCount": "{count, plural, =0 {Nessun prodotto} one {# prodotto} other {# prodotti}}",
     "empty": "Nessun prodotto in questa categoria.",
+    "filters": "Filtri",
+    "otherFilters": "Altro",
+    "clearFilters": "Rimuovi tutti i filtri",
+    "closeFilters": "Chiudi",
+    "removeFilter": "Rimuovi il filtro {filter}",
     "pagination": "Paginazione",
     "prev": "Precedente",
     "next": "Successivo"
