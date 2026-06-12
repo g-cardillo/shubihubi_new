@@ -13,6 +13,11 @@ export interface AdminProduct {
   title_eng?: string;
   macroId?: string;
   type?: string;
+  categoryDescription_it?: string;
+  categoryDescription_eng?: string;
+  subcategory?: string;
+  userFilters?: string[];
+  searchFilters?: string[];
   description_it?: string;
   description?: string;
   description_eng?: string;
@@ -50,6 +55,11 @@ export interface AdminProductPayload {
   title_it: string;
   title_eng: string;
   macroId: string;
+  categoryDescription_it: string;
+  categoryDescription_eng: string;
+  subcategory: string;
+  userFilters: string[];
+  searchFilters: string[];
   categories: string[];
   description_it: string;
   description_eng: string;

@@ -44,6 +44,14 @@ export interface ProductDoc {
   type?: string;
   categories: string[];
 
+  // ── Nuova categorizzazione (tutti opzionali per retrocompatibilità: i
+  //    prodotti esistenti non hanno questi campi) ──────────────────────────────
+  categoryDescription_it?: string;
+  categoryDescription_eng?: string;
+  subcategory?: string;
+  userFilters?: string[];
+  searchFilters?: string[];
+
   // ── Prezzo ──────────────────────────────────────────────────────────────────
   price: number;
   salePrice: number | null;

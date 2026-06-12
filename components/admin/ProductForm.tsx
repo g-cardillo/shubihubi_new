@@ -10,6 +10,18 @@ import {
   uploadProductImages,
 } from '@/lib/admin/repository';
 import type { AdminProduct, AdminProductPayload } from '@/lib/admin/types';
+import {
+  MACRO_CATEGORIES,
+  USER_FILTER_GROUPS,
+  SEARCH_FILTER_GROUPS,
+  macroById,
+} from '@/lib/admin/taxonomy';
+import {
+  addFilterOption,
+  streamFilterOptions,
+  type FilterOption,
+  type FilterOptionType,
+} from '@/lib/admin/filterOptions';
 
 export type FormMode = 'add' | 'edit' | 'duplicate';
 
@@ -38,6 +50,122 @@ export function ProductForm({
   const [titleIt, setTitleIt] = useState(d?.title_it ?? d?.title ?? '');
   const [titleEng, setTitleEng] = useState(d?.title_eng ?? '');
   const [macroId, setMacroId] = useState(d?.macroId ?? d?.type ?? '');
+
+  // ── Categorizzazione (nuovo sistema) ─────────────────────────────────────
+  const [categoryDescIt, setCategoryDescIt] = useState(d?.categoryDescription_it ?? '');
+  const [categoryDescEng, setCategoryDescEng] = useState(d?.categoryDescription_eng ?? '');
+  const [subcategory, setSubcategory] = useState(d?.subcategory ?? '');
+  const [userFilters, setUserFilters] = useState<string[]>(d?.userFilters ?? []);
+  const [searchFilters, setSearchFilters] = useState<string[]>(d?.searchFilters ?? []);
+
+  // Valori extra aggiunti a runtime ("+ Aggiungi nuovo"), in realtime.
+  const [extraOptions, setExtraOptions] = useState<FilterOption[]>([]);
+  useEffect(() => streamFilterOptions(setExtraOptions), []);
+
+  /**
+   * Cambio categoria: precompila le descrizioni (dalla tassonomia per quelle
+   * ufficiali, da `filter_options` per quelle aggiunte a runtime) e azzera la
+   * sottocategoria.
+   */
+  function onMacroChange(id: string) {
+    setMacroId(id);
+    setSubcategory('');
+    const m = macroById(id);
+    const runtime = extraOptions.find(
+      (o) => o.type === 'macroId' && o.value === id,
+    );
+    setCategoryDescIt(m?.description_it ?? runtime?.description_it ?? '');
+    setCategoryDescEng(m?.description_eng ?? runtime?.description_eng ?? '');
+  }
+
+  /**
+   * Nuova categoria: chiede nome + descrizioni IT/ENG, salva tutto su
+   * `filter_options` e seleziona subito la categoria con le sue descrizioni.
+   */
+  async function promptNewMacro() {
+    const value = window.prompt('Nome nuova categoria:')?.trim();
+    if (!value) return;
+    const descIt = window.prompt('Descrizione categoria (IT):')?.trim() ?? '';
+    const descEng = window.prompt('Descrizione categoria (ENG):')?.trim() ?? '';
+    try {
+      await addFilterOption({
+        type: 'macroId',
+        value,
+        description_it: descIt,
+        description_eng: descEng,
+      });
+      setMacroId(value);
+      setSubcategory('');
+      setCategoryDescIt(descIt);
+      setCategoryDescEng(descEng);
+    } catch (e) {
+      setError(`Errore salvataggio categoria: ${(e as Error).message}`);
+    }
+  }
+
+  // Categorie disponibili = tassonomia + extra aggiunte a runtime + eventuale
+  // valore legacy del prodotto in editing (per non romperne la modifica).
+  const macroOptions = useMemo(() => {
+    const seed = MACRO_CATEGORIES.map((m) => m.id);
+    const extra = extraOptions
+      .filter((o) => o.type === 'macroId')
+      .map((o) => o.value);
+    const legacy = macroId && !seed.includes(macroId) && !extra.includes(macroId)
+      ? [macroId]
+      : [];
+    return Array.from(new Set([...seed, ...extra, ...legacy]));
+  }, [extraOptions, macroId]);
+
+  // Sottocategorie disponibili = seed della categoria + extra da filter_options.
+  const subcategoryOptions = useMemo(() => {
+    const seed = macroById(macroId)?.subcategories.map((s) => s.it) ?? [];
+    const extra = extraOptions
+      .filter((o) => o.type === 'subcategory' && o.macroId === macroId)
+      .map((o) => o.value);
+    return Array.from(new Set([...seed, ...extra]));
+  }, [macroId, extraOptions]);
+
+  /** Gruppi filtro = seed + valori extra dello stesso tipo, per gruppo. */
+  const filterGroupsFor = (
+    type: FilterOptionType,
+    seed: Record<string, string[]>,
+  ): Record<string, string[]> => {
+    const groups: Record<string, string[]> = Object.fromEntries(
+      Object.entries(seed).map(([g, vals]) => [g, [...vals]]),
+    );
+    for (const o of extraOptions) {
+      if (o.type !== type || !o.group) continue;
+      const list = groups[o.group] ?? (groups[o.group] = []);
+      if (!list.includes(o.value)) list.push(o.value);
+    }
+    return groups;
+  };
+  const userFilterGroups = useMemo(
+    () => filterGroupsFor('userFilter', USER_FILTER_GROUPS),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [extraOptions],
+  );
+  const searchFilterGroups = useMemo(
+    () => filterGroupsFor('searchFilter', SEARCH_FILTER_GROUPS),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [extraOptions],
+  );
+
+  /** "+ Aggiungi nuovo": chiede il valore, lo salva e lo seleziona subito. */
+  async function promptNewOption(
+    type: FilterOptionType,
+    ctx: { macroId?: string; group?: string },
+    onAdded: (value: string) => void,
+  ) {
+    const value = window.prompt('Nuovo valore:')?.trim();
+    if (!value) return;
+    try {
+      await addFilterOption({ type, ...ctx, value });
+      onAdded(value);
+    } catch (e) {
+      setError(`Errore salvataggio opzione: ${(e as Error).message}`);
+    }
+  }
   const [formati, setFormati] = useState(
     d?.formati ?? (Array.isArray(d?.formats) ? d!.formats!.join(', ') : ''),
   );
@@ -90,7 +218,11 @@ export function ProductForm({
 
   function pickImages(files: FileList | null) {
     if (!files || files.length === 0) return;
-    setNewImages((prev) => [...prev, ...Array.from(files)]);
+    // Snapshot SUBITO: la FileList è "live" e l'input viene svuotato
+    // (`e.target.value = ''`) prima che l'updater di React venga eseguito —
+    // leggerla lazy dentro setState perde i file dal secondo pick in poi.
+    const picked = Array.from(files);
+    setNewImages((prev) => [...prev, ...picked]);
   }
 
   async function submit() {
@@ -115,6 +247,11 @@ export function ProductForm({
         title_it: titleIt.trim(),
         title_eng: titleEng.trim(),
         macroId: macroId.trim(),
+        categoryDescription_it: categoryDescIt.trim(),
+        categoryDescription_eng: categoryDescEng.trim(),
+        subcategory: subcategory.trim(),
+        userFilters,
+        searchFilters,
         categories,
         description_it: descriptionIt.trim(),
         description_eng: descriptionEng.trim(),
@@ -160,13 +297,105 @@ export function ProductForm({
         <Section title="Informazioni base" defaultOpen>
           <TextField label="Titolo (IT) *" value={titleIt} onChange={setTitleIt} />
           <TextField label="Titolo (ENG)" value={titleEng} onChange={setTitleEng} />
-          <TextField label="Macro ID / Tipo" value={macroId} onChange={setMacroId} />
           <TextField
             label="Formati disponibili (es. A4, A3, 50x70)"
             value={formati}
             onChange={setFormati}
           />
           <ChipField label="Categorie" items={categories} onChange={setCategories} />
+        </Section>
+
+        <Section title="Categorizzazione" defaultOpen>
+          <SelectField
+            label="Categoria (macroId)"
+            value={macroId}
+            onChange={onMacroChange}
+            options={macroOptions}
+            placeholder="— Seleziona categoria —"
+            onAddNew={promptNewMacro}
+          />
+          <TextField
+            label="Descrizione categoria (IT)"
+            value={categoryDescIt}
+            onChange={setCategoryDescIt}
+            multiline
+          />
+          <TextField
+            label="Descrizione categoria (ENG)"
+            value={categoryDescEng}
+            onChange={setCategoryDescEng}
+            multiline
+          />
+          <SelectField
+            label="Sottocategoria"
+            value={subcategory}
+            onChange={setSubcategory}
+            options={[
+              ...subcategoryOptions,
+              ...(subcategory && !subcategoryOptions.includes(subcategory)
+                ? [subcategory]
+                : []),
+            ]}
+            placeholder={
+              macroId ? '— Seleziona sottocategoria —' : 'Seleziona prima una categoria'
+            }
+            disabled={!macroId}
+            onAddNew={() =>
+              promptNewOption('subcategory', { macroId }, setSubcategory)
+            }
+          />
+
+          <div>
+            <span className="mb-1 block text-xs font-medium text-neutral-600">
+              Filtri utente
+            </span>
+            <div className="space-y-3 rounded-lg border border-neutral-200 p-3">
+              {Object.entries(userFilterGroups).map(([group, values]) => (
+                <FilterGroupPicker
+                  key={group}
+                  group={group}
+                  values={values}
+                  selected={userFilters}
+                  onToggle={(v) =>
+                    setUserFilters((s) =>
+                      s.includes(v) ? s.filter((x) => x !== v) : [...s, v],
+                    )
+                  }
+                  onAddNew={() =>
+                    promptNewOption('userFilter', { group }, (v) =>
+                      setUserFilters((s) => (s.includes(v) ? s : [...s, v])),
+                    )
+                  }
+                />
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <span className="mb-1 block text-xs font-medium text-neutral-600">
+              Filtri ricerca
+            </span>
+            <div className="space-y-3 rounded-lg border border-neutral-200 p-3">
+              {Object.entries(searchFilterGroups).map(([group, values]) => (
+                <FilterGroupPicker
+                  key={group}
+                  group={group}
+                  values={values}
+                  selected={searchFilters}
+                  onToggle={(v) =>
+                    setSearchFilters((s) =>
+                      s.includes(v) ? s.filter((x) => x !== v) : [...s, v],
+                    )
+                  }
+                  onAddNew={() =>
+                    promptNewOption('searchFilter', { group }, (v) =>
+                      setSearchFilters((s) => (s.includes(v) ? s : [...s, v])),
+                    )
+                  }
+                />
+              ))}
+            </div>
+          </div>
         </Section>
 
         <Section title="Descrizioni">
@@ -329,6 +558,106 @@ function TextField({
         />
       )}
     </label>
+  );
+}
+
+const ADD_NEW = '__add_new__';
+
+/** Dropdown con placeholder e opzione "+ Aggiungi nuovo" (se `onAddNew`). */
+function SelectField({
+  label,
+  value,
+  onChange,
+  options,
+  placeholder,
+  disabled,
+  onAddNew,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: string[];
+  placeholder: string;
+  disabled?: boolean;
+  onAddNew?: () => void;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-xs font-medium text-neutral-600">{label}</span>
+      <select
+        value={value}
+        disabled={disabled}
+        onChange={(e) => {
+          if (e.target.value === ADD_NEW) {
+            onAddNew?.();
+            return;
+          }
+          onChange(e.target.value);
+        }}
+        className="admin-input disabled:opacity-50"
+      >
+        <option value="">{placeholder}</option>
+        {options.map((o) => (
+          <option key={o} value={o}>
+            {o}
+          </option>
+        ))}
+        {onAddNew && <option value={ADD_NEW}>＋ Aggiungi nuovo…</option>}
+      </select>
+    </label>
+  );
+}
+
+/**
+ * Gruppo di filtri multi-selezione a chip (es. "Occasione") con bottone
+ * "+ Aggiungi nuovo" che persiste il valore in `filter_options`.
+ */
+function FilterGroupPicker({
+  group,
+  values,
+  selected,
+  onToggle,
+  onAddNew,
+}: {
+  group: string;
+  values: string[];
+  selected: string[];
+  onToggle: (value: string) => void;
+  onAddNew: () => void;
+}) {
+  return (
+    <div>
+      <div className="mb-1.5 flex items-center justify-between">
+        <span className="text-xs font-semibold text-neutral-700">{group}</span>
+        <button
+          type="button"
+          onClick={onAddNew}
+          className="text-xs text-brand-pink hover:underline"
+        >
+          ＋ Aggiungi nuovo
+        </button>
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {values.map((v) => {
+          const on = selected.includes(v);
+          return (
+            <button
+              key={v}
+              type="button"
+              onClick={() => onToggle(v)}
+              aria-pressed={on}
+              className={`rounded-full border px-3 py-1 text-xs transition ${
+                on
+                  ? 'border-brand-pink bg-brand-pink font-semibold text-white'
+                  : 'border-neutral-300 bg-white text-neutral-700 hover:border-brand-pink/50'
+              }`}
+            >
+              {v}
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
