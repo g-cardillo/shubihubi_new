@@ -5,7 +5,8 @@
  * questo serve solo per il riepilogo a schermo.
  */
 const ITALY_SHIPPING = 9.0;
-const ITALY_FREE_THRESHOLD = 79.0;
+/** Soglia spedizione gratuita in Italia (usata anche dal messaggio nel drawer). */
+export const ITALY_FREE_THRESHOLD = 79.0;
 const INTERNATIONAL_SHIPPING = 30.0;
 
 export function computeShippingCost(country: string, subtotal: number): number {

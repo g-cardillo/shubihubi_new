@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
@@ -13,12 +13,18 @@ import {
   eur,
   MIN_ORDER_AMOUNT,
 } from '@/lib/types/cart';
+import { fetchCartProduct, type CartProductInfo } from '@/lib/cart/products';
+import { ITALY_FREE_THRESHOLD } from '@/lib/checkout/shipping';
 
 /**
  * CartDrawer — pannello carrello globale (client). Si apre/chiude tramite lo
- * stato `isOpen` dello store. Replica i contenuti di `CartDrawer.dart`:
- * righe con quantità, nota, rimozione, subtotale, nota spedizione, minimo
- * d'ordine e bottone checkout (link a `/checkout` quando il minimo è raggiunto).
+ * stato `isOpen` dello store. Replica `CartDrawer.dart`: righe con thumbnail,
+ * quantità, nota, editor opzioni (colore/cornice/confezione regalo), subtotale,
+ * messaggi spedizione (gratuita ≥79€ in Italia), minimo d'ordine e checkout.
+ *
+ * Come il Flutter, i dati prodotto (immagine, colori, cornice, prezzo) vengono
+ * idratati per-riga da `products/{id}`: le righe sincronizzate da Firestore non
+ * portano con sé il prodotto.
  */
 export function CartDrawer() {
   const t = useTranslations('cart');
@@ -26,9 +32,27 @@ export function CartDrawer() {
   const close = useCartStore((s) => s.close);
   const items = useCartStore((s) => s.items);
 
+  // Idratazione prodotti: productId → info (null = prodotto non trovato).
+  const [products, setProducts] = useState<Record<string, CartProductInfo | null>>({});
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    for (const item of items) {
+      if (products[item.productId] !== undefined) continue;
+      void fetchCartProduct(item.productId).then((info) => {
+        if (!cancelled) setProducts((m) => ({ ...m, [item.productId]: info }));
+      });
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, items, products]);
+
   const sub = subtotal(items);
   const canCheckout = sub >= MIN_ORDER_AMOUNT;
   const missing = Math.max(0, MIN_ORDER_AMOUNT - sub);
+  const hasFreeShipping = sub >= ITALY_FREE_THRESHOLD;
+  const missingForFree = Math.max(0, ITALY_FREE_THRESHOLD - sub);
 
   return (
     <>
@@ -71,26 +95,47 @@ export function CartDrawer() {
           <>
             <ul className="flex-1 divide-y divide-brand-pinkLight/60 overflow-y-auto px-5">
               {items.map((item) => (
-                <CartLine key={cartItemKey(item)} item={item} />
+                <CartLine
+                  key={cartItemKey(item)}
+                  item={item}
+                  info={products[item.productId] ?? null}
+                />
               ))}
             </ul>
 
-            <footer className="border-t border-brand-pinkLight px-5 py-4">
+            <footer className="border-t border-brand-pinkLight bg-brand-cream px-5 py-4">
               <div className="flex items-center justify-between">
-                <span className="text-[15px] font-bold text-ink">{t('subtotal')}</span>
-                <span className="text-xl font-bold text-brand-red">{eur(sub)}</span>
+                <span className="text-[15px] font-bold text-brand-red">
+                  {t('estimated_total')}
+                </span>
+                <span className="font-special text-xl text-brand-red">{eur(sub)}</span>
               </div>
-              <p className="mt-2 text-xs text-neutral-500">{t('shipping_note')}</p>
-              {!canCheckout && (
-                <p className="mt-2 text-xs font-medium text-brand-red">
+
+              {/* Messaggi spedizione — replica il footer di CartDrawer.dart:
+                  gratuita ≥79€ (bold) / quanto manca / nota base. */}
+              {hasFreeShipping ? (
+                <p className="mt-2 text-xs font-bold text-brand-red">
+                  {t('shipping_free')}
+                </p>
+              ) : sub > 0 ? (
+                <p className={`mt-2 text-xs ${canCheckout ? 'font-medium text-brand-red' : 'text-brand-red/55'}`}>
+                  {t('shipping_missing', { amount: eur(missingForFree) })}
+                </p>
+              ) : (
+                <p className="mt-2 text-xs text-brand-red/55">{t('shipping_note')}</p>
+              )}
+
+              {!canCheckout && sub > 0 && missing > 0 && (
+                <p className="mt-1.5 text-xs font-medium text-brand-red">
                   {t('min_order', { amount: eur(missing) })}
                 </p>
               )}
+
               {canCheckout ? (
                 <Link
                   href="/checkout"
                   onClick={close}
-                  className="mt-4 block w-full rounded-full bg-brand-pink px-6 py-3.5 text-center text-lg font-semibold text-white transition hover:brightness-105"
+                  className="mt-4 block w-full rounded-full bg-brand-pink px-6 py-3 text-center font-special text-lg text-brand-cream2 transition hover:brightness-105"
                 >
                   {t('checkout_btn')}
                 </Link>
@@ -98,7 +143,7 @@ export function CartDrawer() {
                 <button
                   type="button"
                   disabled
-                  className="mt-4 w-full cursor-not-allowed rounded-full bg-brand-pink/40 px-6 py-3.5 text-lg font-semibold text-white"
+                  className="mt-4 w-full cursor-not-allowed rounded-full bg-brand-pink/40 px-6 py-3 font-special text-lg text-brand-cream2"
                 >
                   {t('checkout_btn')}
                 </button>
@@ -111,7 +156,7 @@ export function CartDrawer() {
   );
 }
 
-function CartLine({ item }: { item: CartItem }) {
+function CartLine({ item, info }: { item: CartItem; info: CartProductInfo | null }) {
   const t = useTranslations('cart');
   const tp = useTranslations('product');
   const key = cartItemKey(item);
@@ -122,19 +167,25 @@ function CartLine({ item }: { item: CartItem }) {
 
   const [editingNote, setEditingNote] = useState(false);
   const [draft, setDraft] = useState(item.note ?? '');
+  const [editingOptions, setEditingOptions] = useState(false);
+
+  // Thumbnail: snapshot della riga, con fallback al prodotto idratato (le
+  // righe arrivate da Firestore prima di questo fix non hanno `image`).
+  const imageSrc = item.image ?? info?.image ?? null;
 
   const optionLabels: Record<string, string> = {
     color: tp('options.color'),
     format: tp('options.format'),
     frame: tp('options.frame'),
+    gift: t('options_gift'),
   };
   const optionEntries = Object.entries(item.options);
 
   return (
     <li className="flex gap-3 py-4">
       <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-[10px] bg-black/[0.06]">
-        {item.image && (
-          <Image src={item.image} alt={item.title} fill sizes="80px" className="object-cover" />
+        {imageSrc && (
+          <Image src={imageSrc} alt={item.title} fill sizes="80px" className="object-cover" />
         )}
       </div>
 
@@ -158,11 +209,30 @@ function CartLine({ item }: { item: CartItem }) {
           <ul className="flex flex-wrap gap-x-3 text-xs text-neutral-500">
             {optionEntries.map(([k, v]) => (
               <li key={k}>
-                {optionLabels[k] ?? k}: {k === 'frame' ? '✓' : v}
+                {optionLabels[k] ?? k}: {k === 'frame' || k === 'gift' ? '✓' : v}
               </li>
             ))}
           </ul>
         )}
+
+        {/* Editor opzioni (replica `_OptionsEditor` Flutter) — disponibile
+            quando i dati prodotto sono idratati. */}
+        {info &&
+          (editingOptions ? (
+            <OptionsEditor
+              item={item}
+              info={info}
+              onClose={() => setEditingOptions(false)}
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={() => setEditingOptions(true)}
+              className="mt-1 w-fit rounded-lg border border-brand-pink/25 px-2.5 py-1 text-xs text-brand-pink hover:border-brand-pink/50"
+            >
+              ⚙ {t('options_edit')}
+            </button>
+          ))}
 
         <div className="mt-1 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -229,5 +299,132 @@ function CartLine({ item }: { item: CartItem }) {
         )}
       </div>
     </li>
+  );
+}
+
+/**
+ * Editor opzioni di riga — replica `_OptionsEditor` di CartDrawer.dart.
+ * Confezione regalo (sempre), cornice (se disponibile), colore (se cambiabile).
+ * Pricing identico a `_saveOptions` Flutter: regalo 4€ per le composizioni /
+ * 2,50€ altrimenti; cornice +5,50€ (solo non-composizioni); prezzo base =
+ * `effectivePrice` del prodotto.
+ */
+function OptionsEditor({
+  item,
+  info,
+  onClose,
+}: {
+  item: CartItem;
+  info: CartProductInfo;
+  onClose: () => void;
+}) {
+  const t = useTranslations('cart');
+  const updateOptions = useCartStore((s) => s.updateOptions);
+
+  const isComposizione = info.macroId.toLowerCase().includes('composizione');
+  const showColor = info.colorChangeable && info.colors.length > 0;
+  const showFrame = info.corniceAvailable;
+
+  const [gift, setGift] = useState(item.options.gift === 'on');
+  const [frame, setFrame] = useState(item.options.frame === 'on');
+  const [colorIdx, setColorIdx] = useState(() => {
+    const i = item.options.color ? info.colors.indexOf(item.options.color) : -1;
+    return i >= 0 ? i : 0;
+  });
+
+  function save() {
+    const giftCost = isComposizione ? 4.0 : 2.5;
+    const unitPrice =
+      info.effectivePrice +
+      (gift ? giftCost : 0) +
+      (frame && !isComposizione ? 5.5 : 0);
+
+    // Chiavi stabili come ProductDetail (presenza = attiva) per merge-key coerente.
+    const options: Record<string, string> = {};
+    if (item.options.format) options.format = item.options.format;
+    if (showColor) options.color = info.colors[colorIdx];
+    if (frame) options.frame = 'on';
+    if (gift) options.gift = 'on';
+
+    updateOptions(cartItemKey(item), options, unitPrice);
+    onClose();
+  }
+
+  return (
+    <div className="mt-1 rounded-[10px] border border-brand-pinkLight bg-brand-cream p-2.5">
+      <Toggle label={t('options_gift')} value={gift} onChange={setGift} />
+      {showFrame && (
+        <div className="mt-2">
+          <Toggle label={t('options_frame')} value={frame} onChange={setFrame} />
+        </div>
+      )}
+
+      {showColor && (
+        <div className="mt-2.5">
+          <p className="text-xs font-bold text-brand-pink">{t('options_color')}</p>
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {info.colors.map((c, i) => {
+              const selected = i === colorIdx;
+              return (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setColorIdx(i)}
+                  className={`rounded-full border px-2.5 py-1 text-xs transition ${
+                    selected
+                      ? 'border-brand-pink bg-brand-pink font-bold text-white'
+                      : 'border-brand-pink bg-white text-brand-red'
+                  }`}
+                >
+                  {c}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <div className="mt-2.5 flex justify-end gap-2 text-xs">
+        <button type="button" onClick={onClose} className="text-brand-red">
+          {t('options_cancel')}
+        </button>
+        <button
+          type="button"
+          onClick={save}
+          className="rounded-lg bg-brand-pink px-3 py-1.5 font-bold text-brand-cream2"
+        >
+          {t('options_save')}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function Toggle({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(!value)}
+      className="flex items-center gap-2 text-[13px] text-brand-red"
+    >
+      <span
+        aria-checked={value}
+        role="checkbox"
+        className={`flex h-[18px] w-[18px] items-center justify-center rounded border-[1.5px] border-brand-pink text-[11px] text-white transition ${
+          value ? 'bg-brand-pink' : 'bg-white'
+        }`}
+      >
+        {value ? '✓' : ''}
+      </span>
+      {label}
+    </button>
   );
 }

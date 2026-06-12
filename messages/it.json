@@ -62,7 +62,7 @@
     "empty": "Il carrello è vuoto",
     "subtotal": "Subtotale",
     "estimated_total": "Totale stimato",
-    "shipping_note": "Spedizione: €5 in Italia · €30 estero. Calcolata al checkout in base all'indirizzo.",
+    "shipping_note": "Spedizione calcolata al checkout in base all'indirizzo.",
     "min_order": "Aggiungi ancora {amount} per raggiungere il minimo d'ordine di spesa.",
     "checkout_btn": "Vai al checkout",
     "remove": "Rimuovi",
@@ -73,7 +73,11 @@
     "options_edit": "Modifica opzioni",
     "options_gift": "Confezione regalo",
     "options_frame": "Con cornice",
-    "options_color": "Colore"
+    "options_color": "Colore",
+    "shipping_missing": "Spedizione calcolata al checkout in base all'indirizzo: ti mancano {amount} per la spedizione gratuita in Italia!",
+    "shipping_free": "Grande notizia, hai ottenuto la spedizione gratuita in Italia!",
+    "options_save": "Salva",
+    "options_cancel": "Annulla"
   },
   "checkout": {
     "billing_addr": "Indirizzo di fatturazione",

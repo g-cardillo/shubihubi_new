@@ -62,7 +62,7 @@
     "empty": "Your cart is empty",
     "subtotal": "Subtotal",
     "estimated_total": "Estimated total",
-    "shipping_note": "Shipping: €5 in Italy · €30 abroad. Calculated at checkout based on your address.",
+    "shipping_note": "Shipping calculated at checkout based on your address.",
     "min_order": "Add {amount} more to reach the minimum order amount.",
     "checkout_btn": "Go to checkout",
     "remove": "Remove",
@@ -73,7 +73,11 @@
     "options_edit": "Edit options",
     "options_gift": "Gift wrapping",
     "options_frame": "With frame",
-    "options_color": "Color"
+    "options_color": "Color",
+    "shipping_missing": "Shipping calculated at checkout based on your address: you are {amount} away from free shipping in Italy!",
+    "shipping_free": "Great news, you have unlocked free shipping in Italy!",
+    "options_save": "Save",
+    "options_cancel": "Cancel"
   },
   "checkout": {
     "billing_addr": "Billing address",

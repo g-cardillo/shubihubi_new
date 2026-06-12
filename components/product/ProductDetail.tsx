@@ -56,10 +56,15 @@ export function ProductDetail({
     if (format) options.format = format;
     if (frame) options.frame = 'on';
 
+    // La cornice costa +5,50 € (solo non-composizioni), come l'`effectiveUnitPrice`
+    // di ProductDetailView Flutter.
+    const isComposizione = product.macroId.toLowerCase().includes('composizione');
+    const framePrice = frame && !isComposizione ? 5.5 : 0;
+
     const item: CartItem = {
       productId: product.id,
       title,
-      unitPrice: product.effectivePrice,
+      unitPrice: product.effectivePrice + framePrice,
       qty,
       soldOut: product.isSoldOut,
       options,

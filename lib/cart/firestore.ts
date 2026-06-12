@@ -39,6 +39,7 @@ function fromDoc(data: Record<string, unknown>): CartItem {
     soldOut: false,
     options: (data.options as Record<string, string>) ?? {},
     note: (data.note as string | null) ?? null,
+    image: (data.image as string | null) ?? null,
     product: null,
   };
 }
@@ -63,6 +64,7 @@ export async function persistLine(uid: string, item: CartItem): Promise<void> {
       unitPrice: item.unitPrice,
       options: item.options,
       note: item.note ?? null,
+      image: item.image ?? null,
       qty: item.qty,
       updatedAt: serverTimestamp(),
     },
@@ -110,6 +112,7 @@ export async function mergeGuestIntoUser(uid: string): Promise<void> {
         unitPrice: item.unitPrice,
         options: item.options,
         note: item.note ?? null,
+        image: item.image ?? null,
         qty: increment(item.qty),
         updatedAt: serverTimestamp(),
       },

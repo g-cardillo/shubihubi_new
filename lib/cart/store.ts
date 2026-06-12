@@ -39,6 +39,17 @@ export interface CartState {
   decrement: (key: string) => void;
   remove: (key: string) => void;
   updateNote: (key: string, note: string | null) => void;
+  /**
+   * Sostituisce opzioni e prezzo unitario di una riga (editor opzioni del
+   * drawer — replica `CartController.updateOptions` Flutter). Le opzioni
+   * determinano la merge-key: se la nuova chiave coincide con un'altra riga
+   * esistente, le quantità vengono fuse.
+   */
+  updateOptions: (
+    key: string,
+    options: Record<string, string>,
+    unitPrice: number,
+  ) => void;
   clear: () => void;
 
   open: () => void;
@@ -128,6 +139,38 @@ export const useCartStore = create<CartState>()(
           set((state) => ({
             items: state.items.map((x) => (cartItemKey(x) === key ? updated : x)),
           }));
+          syncLine(updated);
+        },
+
+        updateOptions: (key, options, unitPrice) => {
+          const state = get();
+          const target = state.items.find((x) => cartItemKey(x) === key);
+          if (!target) return;
+
+          const updated: CartItem = { ...target, options, unitPrice };
+          const newKey = cartItemKey(updated);
+          if (newKey === key) {
+            // Stesse opzioni (è cambiato solo il prezzo o nulla): update in place.
+            set({
+              items: state.items.map((x) => (cartItemKey(x) === key ? updated : x)),
+            });
+            syncLine(updated);
+            return;
+          }
+
+          // La chiave cambia: rimuovi la riga vecchia e fondi nell'eventuale
+          // riga che ha già le nuove opzioni.
+          const existing = state.items.find((x) => cartItemKey(x) === newKey);
+          if (existing) updated.qty += existing.qty;
+          set({
+            items: [
+              ...state.items.filter(
+                (x) => cartItemKey(x) !== key && cartItemKey(x) !== newKey,
+              ),
+              updated,
+            ],
+          });
+          syncDelete(key);
           syncLine(updated);
         },
 
