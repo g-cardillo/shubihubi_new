@@ -14,6 +14,7 @@ import {
   MIN_ORDER_AMOUNT,
 } from '@/lib/types/cart';
 import { fetchCartProduct, type CartProductInfo } from '@/lib/cart/products';
+import { framePriceFor, giftPriceFor } from '@/lib/cart/options';
 import { ITALY_FREE_THRESHOLD } from '@/lib/checkout/shipping';
 
 /**
@@ -321,9 +322,10 @@ function OptionsEditor({
   const t = useTranslations('cart');
   const updateOptions = useCartStore((s) => s.updateOptions);
 
-  const isComposizione = info.macroId.toLowerCase().includes('composizione');
   const showColor = info.colorChangeable && info.colors.length > 0;
   const showFrame = info.corniceAvailable;
+  const framePrice = framePriceFor(info.macroId);
+  const giftPrice = giftPriceFor(info.macroId);
 
   const [gift, setGift] = useState(item.options.gift === 'on');
   const [frame, setFrame] = useState(item.options.frame === 'on');
@@ -333,11 +335,8 @@ function OptionsEditor({
   });
 
   function save() {
-    const giftCost = isComposizione ? 4.0 : 2.5;
     const unitPrice =
-      info.effectivePrice +
-      (gift ? giftCost : 0) +
-      (frame && !isComposizione ? 5.5 : 0);
+      info.effectivePrice + (gift ? giftPrice : 0) + (frame ? framePrice : 0);
 
     // Chiavi stabili come ProductDetail (presenza = attiva) per merge-key coerente.
     const options: Record<string, string> = {};
@@ -352,10 +351,27 @@ function OptionsEditor({
 
   return (
     <div className="mt-1 rounded-[10px] border border-brand-pinkLight bg-brand-cream p-2.5">
-      <Toggle label={t('options_gift')} value={gift} onChange={setGift} />
+      {/* Cornice e confezione regalo sono mutuamente esclusive. */}
+      <Toggle
+        label={t('options_gift')}
+        addon={`+${eur(giftPrice)}`}
+        value={gift}
+        onChange={(v) => {
+          setGift(v);
+          if (v) setFrame(false);
+        }}
+      />
       {showFrame && (
         <div className="mt-2">
-          <Toggle label={t('options_frame')} value={frame} onChange={setFrame} />
+          <Toggle
+            label={t('options_frame')}
+            addon={`+${eur(framePrice)}`}
+            value={frame}
+            onChange={(v) => {
+              setFrame(v);
+              if (v) setGift(false);
+            }}
+          />
         </div>
       )}
 
@@ -404,16 +420,18 @@ function Toggle({
   label,
   value,
   onChange,
+  addon,
 }: {
   label: string;
   value: boolean;
   onChange: (v: boolean) => void;
+  addon?: string;
 }) {
   return (
     <button
       type="button"
       onClick={() => onChange(!value)}
-      className="flex items-center gap-2 text-[13px] text-brand-red"
+      className="flex w-full items-center gap-2 text-[13px] text-brand-red"
     >
       <span
         aria-checked={value}
@@ -424,7 +442,8 @@ function Toggle({
       >
         {value ? '✓' : ''}
       </span>
-      {label}
+      <span className="flex-1 text-left">{label}</span>
+      {addon && <span className="font-bold text-brand-pink">{addon}</span>}
     </button>
   );
 }

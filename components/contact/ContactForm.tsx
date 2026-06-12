@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { useMailingList } from '@/lib/hooks/useMailingList';
@@ -175,7 +175,7 @@ export function ContactForm() {
           </div>
         </Row>
         <Row>
-          <Field name="date" type="date" min={min} max={max} value={f.date} onChange={set('date')} placeholder={t('form_event_date_label')} error={errors.date} />
+          <DateField min={min} max={max} value={f.date} onChange={set('date')} placeholder={t('form_event_date_label')} error={errors.date} />
           <Field name="eventLocation" value={f.eventLocation} onChange={set('eventLocation')} placeholder={t('form_event_location_label')} error={errors.eventLocation} />
         </Row>
         <Row>
@@ -257,6 +257,83 @@ function Field({
   return (
     <div className="flex-1">
       <input {...props} className={PILL} />
+      <FieldError error={error} />
+    </div>
+  );
+}
+
+/**
+ * Campo data che si comporta come gli altri pill: mostra il placeholder o la
+ * data formattata (gg/mm/aaaa), niente UI nativa visibile. Al click apre il
+ * calendario nativo (`showPicker`), così la scelta avviene SOLO dal menu — su
+ * mobile il layout resta identico agli altri input.
+ */
+function DateField({
+  min,
+  max,
+  value,
+  onChange,
+  placeholder,
+  error,
+}: {
+  min: string;
+  max: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  placeholder: string;
+  error?: string;
+}) {
+  const ref = useRef<HTMLInputElement>(null);
+
+  const open = () => {
+    const el = ref.current;
+    if (!el) return;
+    // showPicker apre il calendario senza mostrare il campo nativo; fallback al
+    // focus per i browser che non lo supportano.
+    try {
+      el.showPicker();
+    } catch {
+      el.focus();
+    }
+  };
+
+  const display = value
+    ? value.split('-').reverse().join('/') // yyyy-mm-dd → dd/mm/yyyy
+    : placeholder;
+
+  return (
+    <div className="flex-1">
+      <div className="relative">
+        <button
+          type="button"
+          onClick={open}
+          className={`${PILL} flex items-center justify-between text-left`}
+        >
+          <span className={value ? 'text-ink' : 'text-brand-pinkHot/70'}>
+            {display}
+          </span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <rect x="3" y="4.5" width="18" height="16" rx="2.5" stroke="#ee67ab" strokeWidth="1.6" />
+            <path d="M3 9h18M8 3v3M16 3v3" stroke="#ee67ab" strokeWidth="1.6" strokeLinecap="round" />
+          </svg>
+        </button>
+        {/* Input reale: invisibile, copre il pill per ricevere il click e mostrare
+            il picker; gestisce anche il cambio valore. */}
+        <input
+          ref={ref}
+          type="date"
+          min={min}
+          max={max}
+          value={value}
+          onChange={onChange}
+          onClick={(e) => {
+            e.preventDefault();
+            open();
+          }}
+          aria-label={placeholder}
+          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+        />
+      </div>
       <FieldError error={error} />
     </div>
   );

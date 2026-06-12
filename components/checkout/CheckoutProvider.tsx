@@ -12,6 +12,7 @@ import {
 } from 'react';
 import { useCartStore } from '@/lib/cart/store';
 import { subtotal as cartSubtotal } from '@/lib/types/cart';
+import { toBackendOptions } from '@/lib/cart/options';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { useMailingList } from '@/lib/hooks/useMailingList';
 import { loadAddresses, type UserAddress } from '@/lib/profile/firestore';
@@ -375,7 +376,8 @@ export function CheckoutProvider({ children }: { children: ReactNode }) {
     const lineItems = availableItems.map((it) => ({
       productId: it.productId,
       qty: it.qty,
-      options: it.options,
+      // Chiavi italiane attese dal backend per ricalcolare cornice/regalo.
+      options: toBackendOptions(it.options),
       ...(it.note ? { note: it.note } : {}),
     }));
 

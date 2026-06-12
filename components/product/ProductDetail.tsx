@@ -4,9 +4,10 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import type { Locale } from '@/i18n/routing';
 import type { Product } from '@/lib/types/product';
-import type { CartItem } from '@/lib/types/cart';
+import { type CartItem, eur } from '@/lib/types/cart';
 import { pickLocalized } from '@/lib/i18n/localized';
 import { useCartStore } from '@/lib/cart/store';
+import { framePriceFor, giftPriceFor } from '@/lib/cart/options';
 import { ProductGallery } from './ProductGallery';
 
 /**
@@ -46,25 +47,31 @@ export function ProductDetail({
     product.formats.length ? product.formats[0] : null,
   );
   const [frame, setFrame] = useState(false);
+  const [gift, setGift] = useState(false);
   const [qty, setQty] = useState(1);
   const [wishlist, setWishlist] = useState(false);
 
+  // Prezzo unitario live = base + add-on selezionati (cornice / confezione
+  // regalo). Identico al calcolo del backend `createDraftOrder`.
+  const framePrice = framePriceFor(product.macroId);
+  const giftPrice = giftPriceFor(product.macroId);
+  const unitPrice =
+    product.effectivePrice + (frame ? framePrice : 0) + (gift ? giftPrice : 0);
+  const totalPrice = unitPrice * qty;
+
   function handleAddToCart() {
-    // Opzioni con chiavi stabili (color/format/frame) per una merge-key coerente.
+    // Opzioni con chiavi stabili (color/format/frame/gift) per una merge-key
+    // coerente; vengono convertite nelle chiavi backend al checkout.
     const options: Record<string, string> = {};
     if (product.colorChangeable && color) options.color = color;
     if (format) options.format = format;
     if (frame) options.frame = 'on';
-
-    // La cornice costa +5,50 € (solo non-composizioni), come l'`effectiveUnitPrice`
-    // di ProductDetailView Flutter.
-    const isComposizione = product.macroId.toLowerCase().includes('composizione');
-    const framePrice = frame && !isComposizione ? 5.5 : 0;
+    if (gift) options.gift = 'on';
 
     const item: CartItem = {
       productId: product.id,
       title,
-      unitPrice: product.effectivePrice + framePrice,
+      unitPrice,
       qty,
       soldOut: product.isSoldOut,
       options,
@@ -207,14 +214,34 @@ export function ProductDetail({
           <QtyStepper value={qty} onChange={setQty} />
         </div>
 
-        {/* Cornice */}
-        {product.corniceAvailable && (
-          <BrandCheckbox checked={frame} onChange={setFrame}>
-            {t('options.frame')}
+        {/* Cornice + Confezione regalo — mutuamente esclusive: si può scegliere
+            una sola opzione, o nessuna. */}
+        <div className="flex flex-col gap-2.5">
+          {product.corniceAvailable && (
+            <BrandCheckbox
+              checked={frame}
+              onChange={(v) => {
+                setFrame(v);
+                if (v) setGift(false);
+              }}
+              addon={`+${eur(framePrice)}`}
+            >
+              {t('options.frame')}
+            </BrandCheckbox>
+          )}
+          <BrandCheckbox
+            checked={gift}
+            onChange={(v) => {
+              setGift(v);
+              if (v) setFrame(false);
+            }}
+            addon={`+${eur(giftPrice)}`}
+          >
+            {t('options.gift')}
           </BrandCheckbox>
-        )}
+        </div>
 
-        {/* Add to cart */}
+        {/* Add to cart — prezzo live = (base + add-on) × quantità */}
         <button
           type="button"
           disabled={product.isSoldOut}
@@ -226,7 +253,7 @@ export function ProductDetail({
           </span>
           {!product.isSoldOut && (
             <span className="rounded-full bg-brand-cream2 px-3.5 py-1 font-body text-lg font-semibold text-brand-red">
-              {(product.isOnSale && product.salePriceText) || product.priceText}
+              {eur(totalPrice)}
             </span>
           )}
         </button>
@@ -463,16 +490,18 @@ function QtyStepper({
 function BrandCheckbox({
   checked,
   onChange,
+  addon,
   children,
 }: {
   checked: boolean;
   onChange: (v: boolean) => void;
+  addon?: string;
   children: React.ReactNode;
 }) {
   return (
     <label
-      className={`flex cursor-pointer items-start gap-3 rounded-2xl border-2 px-4 py-3 transition ${
-        checked ? 'border-brand-pink bg-brand-cream' : 'border-transparent'
+      className={`flex cursor-pointer items-center gap-3 rounded-2xl border-2 px-4 py-3 transition ${
+        checked ? 'border-brand-pink bg-brand-cream' : 'border-brand-pinkSkin'
       }`}
     >
       <input
@@ -482,15 +511,20 @@ function BrandCheckbox({
         className="hidden"
       />
       <span
-        className={`mt-0.5 grid h-[22px] w-[22px] flex-shrink-0 place-items-center rounded-md border-2 border-brand-pink text-sm font-black text-brand-cream2 ${
+        className={`grid h-[22px] w-[22px] flex-shrink-0 place-items-center rounded-md border-2 border-brand-pink text-sm font-black text-brand-cream2 ${
           checked ? 'bg-brand-pink' : 'bg-white'
         }`}
       >
         {checked ? '✓' : ''}
       </span>
-      <span className="font-body text-[15px] font-semibold text-ink">
+      <span className="flex-1 font-body text-[15px] font-semibold text-ink">
         {children}
       </span>
+      {addon && (
+        <span className="font-body text-[15px] font-bold text-brand-pink">
+          {addon}
+        </span>
+      )}
     </label>
   );
 }

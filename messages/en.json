@@ -39,7 +39,8 @@
       "color": "Color",
       "format": "Format",
       "frame": "Add frame",
-      "quantity": "Quantity"
+      "quantity": "Quantity",
+      "gift": "Gift wrapping"
     },
     "taxIncluded": "Taxes included",
     "wishlist": "Add to wishlist",

@@ -11,8 +11,29 @@ import { useCheckout } from './CheckoutProvider';
  * Riepilogo ordine + campi codice sconto / buono + totali.
  * Replica `_OrderSummary` di `CheckoutPage.dart`.
  */
+/** Formatta un'opzione (chiave interna) in testo leggibile. */
+function formatOption(
+  k: string,
+  v: string,
+  tp: (key: string) => string,
+): string {
+  switch (k) {
+    case 'color':
+      return `${tp('options.color')}: ${v}`;
+    case 'format':
+      return `${tp('options.format')}: ${v}`;
+    case 'frame':
+      return tp('options.frame');
+    case 'gift':
+      return tp('options.gift');
+    default:
+      return `${k}: ${v}`;
+  }
+}
+
 export function OrderSummary() {
   const t = useTranslations('checkout');
+  const tp = useTranslations('product');
   // Selettore atomico: il `.filter` qui dentro creerebbe un nuovo array a ogni
   // render → useSyncExternalStore (Zustand) lo vede sempre "cambiato" → loop
   // infinito. Si seleziona il riferimento grezzo e si filtra in useMemo.
@@ -40,7 +61,7 @@ export function OrderSummary() {
                 <p className="text-sm font-semibold text-neutral-900">{it.title}</p>
                 {opts.length > 0 && (
                   <p className="text-xs text-neutral-500">
-                    {opts.map(([k, v]) => `${k}: ${v}`).join(' • ')}
+                    {opts.map(([k, v]) => formatOption(k, v, tp)).join(' • ')}
                   </p>
                 )}
                 <p className="mt-0.5 text-xs text-neutral-500">
