@@ -122,23 +122,71 @@ export default async function GalleryPage({
         textClassName="text-brand-red"
       />
 
-      {/* ── 8. Pietropaolo (foto + ovali su pattern) ──────────────────────── */}
-      <section className="grid bg-white desk:grid-cols-[3fr_7fr] desk:items-stretch">
-        <Pic src="/gallery/evento-5.webp" className="h-[300px] desk:h-auto" />
-        <div>
-          <div className="px-6 py-8 desk:px-12 desk:pt-10">
+      {/* ── 8. Pietropaolo (foto + ovali su pattern) — replica fedele di
+             `_PietropaoloSection` Flutter, con layout diversi sui due
+             breakpoint. */}
+      <section className="bg-white">
+        {/* Mobile: testo, poi composizione alta 460px con la foto a sinistra
+            e la colonna di 3 ovali a cavallo del suo bordo destro. */}
+        <div className="desk:hidden">
+          <div className="px-6 pb-5 pt-7">
             <SectionTitle text={t('pietropaolo_title')} />
-            <div className="mt-4">
+            <div className="mt-3.5">
               <Body>{t('pietropaolo_body')}</Body>
             </div>
           </div>
-          <div
-            className="flex flex-col items-center gap-6 px-6 py-8 desk:flex-row desk:gap-4 desk:px-10"
-            style={{ backgroundImage: "url('/pattern/6.webp')", backgroundRepeat: 'repeat' }}
-          >
-            {['evento-6', 'pittura1', 'evento-7'].map((n) => (
-              <Oval key={n} src={`/gallery/${n}.webp`} />
-            ))}
+          <div className="relative h-[460px]">
+            <div className="absolute inset-y-0 left-0 w-[82%]">
+              <Image
+                src="/gallery/evento-5.webp"
+                alt=""
+                fill
+                sizes="82vw"
+                className="object-cover"
+              />
+            </div>
+            <div className="absolute bottom-4 right-4 top-4 flex w-[36%] flex-col gap-2.5">
+              {['evento-6', 'pittura1', 'evento-7'].map((n) => (
+                <div key={n} className="flex min-h-0 flex-1 items-center justify-center">
+                  <div
+                    className="h-full max-w-full rounded-full bg-white p-1"
+                    style={{ aspectRatio: '1 / 1.25' }}
+                  >
+                    <div className="relative h-full w-full overflow-hidden rounded-full">
+                      <Image
+                        src={`/gallery/${n}.webp`}
+                        alt=""
+                        fill
+                        sizes="36vw"
+                        className="object-cover"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Desktop: foto 30% a tutta altezza + colonna testo e fascia pattern
+            con i 3 ovali fluidi (Expanded nel Flutter → flex-1). */}
+        <div className="hidden desk:grid desk:grid-cols-[3fr_7fr] desk:items-stretch">
+          <Pic src="/gallery/evento-5.webp" />
+          <div>
+            <div className="px-6 py-8 desk:px-12 desk:pt-10">
+              <SectionTitle text={t('pietropaolo_title')} />
+              <div className="mt-4">
+                <Body>{t('pietropaolo_body')}</Body>
+              </div>
+            </div>
+            <div
+              className="flex items-center gap-4 px-10 py-8"
+              style={{ backgroundImage: "url('/pattern/6.webp')", backgroundRepeat: 'repeat' }}
+            >
+              {['evento-6', 'pittura1', 'evento-7'].map((n) => (
+                <Oval key={n} src={`/gallery/${n}.webp`} className="min-w-0 flex-1" />
+              ))}
+            </div>
           </div>
         </div>
       </section>

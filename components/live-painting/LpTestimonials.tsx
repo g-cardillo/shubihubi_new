@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 export type LpReview = {
   nameDate: string;
@@ -9,9 +9,10 @@ export type LpReview = {
 };
 
 /**
- * Carosello recensioni della pagina Live Painting (replica
+ * Carosello recensioni (usato da Live Painting e Gallery — replica
  * `_LpTestimonialSection` Flutter): card bianca con fade tra le recensioni,
- * titolo "Dicono di me.." in overlay, frecce (solo desktop) e pallini.
+ * titolo "Dicono di me.." in overlay, frecce (solo desktop), pallini e
+ * swipe touch orizzontale (come il `PageView` Flutter).
  */
 export function LpTestimonials({
   title,
@@ -25,11 +26,27 @@ export function LpTestimonials({
   const goTo = (i: number) => setIndex(((i % n) + n) % n);
   const current = reviews[index];
 
+  // Swipe touch: cambia recensione se il gesto è prevalentemente orizzontale
+  // e supera la soglia (non intercetta lo scroll verticale della pagina).
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const start = touchStart.current;
+    touchStart.current = null;
+    if (!start) return;
+    const dx = e.changedTouches[0].clientX - start.x;
+    const dy = e.changedTouches[0].clientY - start.y;
+    if (Math.abs(dx) < 48 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    goTo(dx < 0 ? index + 1 : index - 1);
+  };
+
   return (
     <div className="mx-auto max-w-[1100px]">
-      <div className="relative">
+      <div className="relative" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
         {/* Card recensione */}
-        <div className="mt-9 rounded-[24px] bg-white desk:mt-14 desk:rounded-[36px]">
+        <div className="mt-9 touch-pan-y rounded-[24px] bg-white desk:mt-14 desk:rounded-[36px]">
           <div className="flex flex-col px-[22px] py-7 desk:px-[52px] desk:py-10">
             <p className="font-title text-[22px] font-bold leading-snug text-brand-red desk:text-[32px]">
               {current.nameDate}
