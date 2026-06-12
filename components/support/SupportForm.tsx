@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { useMailingList } from '@/lib/hooks/useMailingList';
+import { resizeToWebp } from '@/lib/admin/imageResize';
 
 /**
  * Form "Supporto ordini" — replica fedele di `SupportFormWidget.dart`.
@@ -43,6 +44,8 @@ const PILL =
 
 interface Photo {
   filename: string;
+  /** Estensione effettiva dopo la ricompressione (webp, o quella originale). */
+  ext: string;
   dataUrl: string;
   base64: string;
 }
@@ -92,24 +95,34 @@ export function SupportForm() {
     if (remaining <= 0) return;
 
     const picked = await Promise.all(
-      files.slice(0, remaining).map(
-        (file) =>
-          new Promise<Photo | null>((resolve) => {
-            const reader = new FileReader();
-            reader.onload = () => {
-              const dataUrl = String(reader.result ?? '');
-              const comma = dataUrl.indexOf(',');
-              if (comma === -1) return resolve(null);
-              resolve({
-                filename: file.name,
-                dataUrl,
-                base64: dataUrl.slice(comma + 1),
-              });
-            };
-            reader.onerror = () => resolve(null);
-            reader.readAsDataURL(file);
-          }),
-      ),
+      files.slice(0, remaining).map(async (file): Promise<Photo | null> => {
+        // Ricomprimi PRIMA dell'invio (come `imageQuality: 60` del picker
+        // Flutter): le foto originali da telefono sono 3–8 MB l'una e in
+        // base64 gonfiano il payload oltre i limiti della Cloud Function
+        // → 500. A 1280px in WebP una foto pesa ~100–300 KB.
+        const { blob, isWebp } = await resizeToWebp(file, 1280);
+        const ext = isWebp
+          ? 'webp'
+          : file.name.includes('.')
+            ? file.name.split('.').pop()!.toLowerCase()
+            : 'jpg';
+        return new Promise<Photo | null>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const dataUrl = String(reader.result ?? '');
+            const comma = dataUrl.indexOf(',');
+            if (comma === -1) return resolve(null);
+            resolve({
+              filename: file.name,
+              ext,
+              dataUrl,
+              base64: dataUrl.slice(comma + 1),
+            });
+          };
+          reader.onerror = () => resolve(null);
+          reader.readAsDataURL(blob);
+        });
+      }),
     );
     const valid = picked.filter((p): p is Photo => p !== null);
     if (valid.length) setPhotos((s) => [...s, ...valid].slice(0, MAX_PHOTOS));
@@ -153,12 +166,10 @@ export function SupportForm() {
       };
       if (showReturnReason && returnReason) payload.returnReason = t(returnReason);
       if (showPhotoUpload && photos.length > 0) {
-        payload.attachments = photos.map((p, i) => {
-          const ext = p.filename.includes('.')
-            ? p.filename.split('.').pop()!.toLowerCase()
-            : 'jpg';
-          return { filename: `foto_${i + 1}.${ext}`, content: p.base64 };
-        });
+        payload.attachments = photos.map((p, i) => ({
+          filename: `foto_${i + 1}.${p.ext}`,
+          content: p.base64,
+        }));
       }
 
       const resp = await fetch(CLOUD_FN, {
