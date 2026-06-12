@@ -122,6 +122,32 @@ export async function refreshIdToken(): Promise<void> {
   await getAuth().currentUser?.getIdToken(true);
 }
 
+/**
+ * "Pubblica e aggiorna sito": invalida la cache del sito pubblico dopo una
+ * modifica al catalogo (tag `products` + pagine shop e dettaglio prodotto in
+ * entrambe le lingue). Autenticata con l'ID token dell'admin corrente — il
+ * claim `admin` viene verificato server-side da `/api/revalidate`.
+ * Ritorna true se l'invalidazione è andata a buon fine.
+ */
+export async function revalidateSite(): Promise<boolean> {
+  try {
+    const token = await getAuth().currentUser?.getIdToken();
+    if (!token) return false;
+    const params = new URLSearchParams();
+    params.append('tag', 'products');
+    params.append('path', '/[locale]/shop');
+    params.append('path', '/[locale]/shop/[slug]');
+    const res = await fetch(`/api/revalidate?${params.toString()}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return false;
+    const body = (await res.json()) as { ok?: boolean };
+    return body.ok === true;
+  } catch {
+    return false;
+  }
+}
+
 export async function adminAddProduct(payload: AdminProductPayload): Promise<void> {
   await httpsCallable(functions, 'adminAddProduct')(payload);
 }

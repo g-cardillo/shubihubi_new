@@ -188,19 +188,12 @@ export function ShopBrowser({
 
   const filtered = useMemo(() => {
     if (selectedByGroup.size === 0) return subFiltered;
+    const groups = Array.from(selectedByGroup.values());
     return subFiltered.filter((c) => {
       const have = new Set(c.userFilters.map(norm));
-      for (const wanted of selectedByGroup.values()) {
-        let ok = false;
-        for (const v of wanted) {
-          if (have.has(v)) {
-            ok = true;
-            break;
-          }
-        }
-        if (!ok) return false;
-      }
-      return true;
+      return groups.every((wanted) =>
+        Array.from(wanted).some((v) => have.has(v)),
+      );
     });
   }, [subFiltered, selectedByGroup]);
 

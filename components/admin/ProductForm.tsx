@@ -7,6 +7,7 @@ import {
   adminUpdateProduct,
   newProductId,
   refreshIdToken,
+  revalidateSite,
   uploadProductImages,
 } from '@/lib/admin/repository';
 import type { AdminProduct, AdminProductPayload } from '@/lib/admin/types';
@@ -201,6 +202,18 @@ export function ProductForm({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Dopo il salvataggio: pubblicazione sul sito (revalidate cache Next).
+  const [isSaved, setIsSaved] = useState(false);
+  const [publishState, setPublishState] = useState<
+    'idle' | 'publishing' | 'ok' | 'failed'
+  >('idle');
+
+  /** Invalida tag `products` + pagine /[locale]/shop e /[locale]/shop/[slug]. */
+  async function publish() {
+    setPublishState('publishing');
+    setPublishState((await revalidateSite()) ? 'ok' : 'failed');
+  }
+
   // editingProductId: valorizzato solo in edit (add e duplicate creano un id nuovo).
   const editingProductId = isEdit ? (d?.id ?? null) : null;
 
@@ -281,7 +294,10 @@ export function ProductForm({
       } else {
         await adminUpdateProduct(payload);
       }
-      onDone();
+      // Non si torna subito alla lista: si mostra l'esito della pubblicazione
+      // (revalidate del sito pubblico), avviata in automatico.
+      setIsSaved(true);
+      void publish();
     } catch (e) {
       setError(`Errore: ${(e as Error).message}`);
     } finally {
@@ -477,23 +493,63 @@ export function ProductForm({
 
         {error && <p className="text-sm font-medium text-brand-red">{error}</p>}
 
-        <div className="flex items-center gap-3 pt-2">
-          <button
-            type="button"
-            onClick={submit}
-            disabled={isLoading}
-            className="rounded-full bg-brand-pink px-8 py-3 text-sm font-semibold text-white hover:brightness-105 disabled:opacity-60"
-          >
-            {isLoading ? '…' : editingProductId == null ? 'Aggiungi prodotto' : 'Salva modifiche'}
-          </button>
-          <button
-            type="button"
-            onClick={onDone}
-            className="rounded-full px-5 py-3 text-sm font-semibold text-neutral-600 hover:bg-neutral-100"
-          >
-            Annulla
-          </button>
-        </div>
+        {isSaved ? (
+          /* Esito salvataggio + pubblicazione (revalidate del sito pubblico). */
+          <div className="space-y-3 rounded-xl border border-neutral-200 bg-white p-4">
+            <p className="text-sm font-semibold text-neutral-900">
+              ✅ Prodotto salvato.
+            </p>
+            {publishState === 'publishing' && (
+              <p className="text-sm text-neutral-600">Aggiornamento sito in corso…</p>
+            )}
+            {publishState === 'ok' && (
+              <p className="text-sm font-medium text-green-700">✅ Sito aggiornato</p>
+            )}
+            {publishState === 'failed' && (
+              <p className="text-sm font-medium text-amber-700">
+                ⚠️ Prodotto salvato, ma l&apos;aggiornamento del sito non è
+                riuscito: le modifiche appariranno comunque entro 5 minuti.
+              </p>
+            )}
+            <div className="flex items-center gap-3 pt-1">
+              {publishState === 'failed' && (
+                <button
+                  type="button"
+                  onClick={publish}
+                  className="rounded-full bg-brand-pink px-6 py-2.5 text-sm font-semibold text-white hover:brightness-105"
+                >
+                  Pubblica e aggiorna sito
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={onDone}
+                disabled={publishState === 'publishing'}
+                className="rounded-full border border-neutral-300 px-6 py-2.5 text-sm font-semibold text-neutral-700 hover:bg-neutral-50 disabled:opacity-60"
+              >
+                Torna ai prodotti
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-3 pt-2">
+            <button
+              type="button"
+              onClick={submit}
+              disabled={isLoading}
+              className="rounded-full bg-brand-pink px-8 py-3 text-sm font-semibold text-white hover:brightness-105 disabled:opacity-60"
+            >
+              {isLoading ? '…' : editingProductId == null ? 'Aggiungi prodotto' : 'Salva modifiche'}
+            </button>
+            <button
+              type="button"
+              onClick={onDone}
+              className="rounded-full px-5 py-3 text-sm font-semibold text-neutral-600 hover:bg-neutral-100"
+            >
+              Annulla
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
