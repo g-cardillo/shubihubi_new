@@ -5,6 +5,9 @@ import type { Locale } from '@/i18n/routing';
 import { Link } from '@/i18n/navigation';
 import { QuoteBand } from '@/components/shared/QuoteBand';
 import { LpTestimonials, type LpReview } from '@/components/live-painting/LpTestimonials';
+import { SectionWaveBottom } from '@/components/shared/SectionWaveBottom';
+import { ProductGrid } from '@/components/product/ProductGrid';
+import { getLatest } from '@/lib/products/repository';
 import { BRAND_BLUR } from '@/lib/utils/blurPlaceholder';
 
 // Masonry: immagini gallery migrate da assets/gallery → public/gallery.
@@ -33,9 +36,15 @@ export default async function GalleryPage({
   setRequestLocale(locale);
   const t = await getTranslations('gallery');
   const tHome = await getTranslations('home');
+  const tn = await getTranslations('nav');
 
   const quotes = t.raw('quotes') as Array<{ quote: string; author: string }>;
   const reviews = t.raw('reviews') as LpReview[];
+
+  // Ultimi 4 prodotti per la sezione Shop in fondo (come la home).
+  const latest = await getLatest(4);
+  const shopLabel =
+    tn('shop').charAt(0).toUpperCase() + tn('shop').slice(1).toLowerCase();
 
   return (
     <div className="bg-white">
@@ -307,6 +316,58 @@ export default async function GalleryPage({
         style={{ backgroundImage: "url('/pattern/7.webp')", backgroundRepeat: 'repeat' }}
       >
         <LpTestimonials title={t('reviews_title')} reviews={reviews} />
+      </section>
+
+      {/* ── 15. Shop CTA — sezione finale (replica `_ShopPreviewSection` di
+          GalleryView.dart): foto `Varie 5` con overlay scuro che sfuma fin
+          sopra le card, titolo Genty rosa allineato a destra, bottone "Qui" e
+          griglia degli ultimi 4 prodotti. Onde in basso color footer (#F5EBC1)
+          perché su /gallery il footer è SENZA wave (vedi NO_WAVE_PAGES). ────── */}
+      <section className="relative bg-white">
+        {/* Sfondo foto + overlay scuro: copre l'hero e arriva fino a metà card. */}
+        <div className="absolute inset-x-0 top-0 h-[400px] desk:h-[560px]">
+          <Image
+            src="/gallery/shop-bg.webp"
+            alt=""
+            fill
+            sizes="100vw"
+            placeholder="blur"
+            blurDataURL={BRAND_BLUR}
+            className="object-cover"
+          />
+          <div className="absolute inset-0 bg-black/[0.38]" />
+        </div>
+
+        {/* Hero: titolo + bottone, allineati a destra. */}
+        <div className="relative flex h-[200px] items-center justify-end px-6 desk:h-[320px] desk:pr-20">
+          <div className="flex flex-col items-center">
+            <p className="font-special text-[80px] leading-none text-brand-pink desk:text-[140px]">
+              {shopLabel}
+            </p>
+            <Link
+              href="/shop"
+              className="cta-bounce mt-2.5 inline-block rounded-full bg-brand-pink px-7 py-2.5 font-special text-[24px] text-brand-cream2 desk:px-9 desk:py-3 desk:text-[32px] desk:hover:shadow-pink-cta"
+            >
+              {tHome('here_btn')}
+            </Link>
+          </div>
+        </div>
+
+        {/* Griglia ultimi prodotti (2 col mobile / 4 desktop). */}
+        <div className="relative px-[14px] py-6 desk:px-6 desk:py-10">
+          <div className="mx-auto max-w-content">
+            {latest.length > 0 ? (
+              <ProductGrid products={latest} locale={locale} />
+            ) : (
+              <p className="py-7 text-center text-sm text-neutral-500">
+                {tHome('no_products')}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Raccordo a onde verso il footer (stesso cream del footer). */}
+        <SectionWaveBottom color="#F5EBC1" />
       </section>
     </div>
   );

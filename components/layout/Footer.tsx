@@ -39,7 +39,7 @@ const WHITE_PAGES = ['/contacts', '/support', '/live-painting'];
  * con `SectionWaveBottom`. Le pagine con sezione finale bianca/neutra usano
  * il default (wave sul footer).
  */
-const NO_WAVE_PAGES = ['/', '/live-painting', '/stationery', '/contacts'];
+const NO_WAVE_PAGES = ['/', '/live-painting', '/stationery', '/contacts', '/gallery'];
 
 export function Footer({ wave = true }: { wave?: boolean }) {
   const t = useTranslations('footer');
