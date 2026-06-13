@@ -110,6 +110,10 @@ export default async function ShopPage({
     macroId: product.macroId,
     subcategory: product.subcategory ?? '',
     userFilters: product.userFilters ?? [],
+    isOnSale: product.isOnSale,
+    isNew: product.isNew,
+    // Prezzo effettivo per la fascia di prezzo: salePrice se in saldo, altrimenti price.
+    effectivePrice: product.effectivePrice,
     node: (
       <ProductCard
         product={product}

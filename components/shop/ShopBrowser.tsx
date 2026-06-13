@@ -19,8 +19,26 @@ export interface ShopCard {
   macroId: string;
   subcategory: string;
   userFilters: string[];
+  /** Filtro rapido "In Saldo". */
+  isOnSale: boolean;
+  /** Filtro rapido "Novità" (stessa logica del badge NUOVO — vedi mapper). */
+  isNew: boolean;
+  /** Prezzo effettivo (salePrice se in saldo, altrimenti price) per la fascia. */
+  effectivePrice: number;
   node: ReactNode;
 }
+
+/**
+ * Fasce di prezzo predefinite (chip a selezione singola). Il Flutter non aveva
+ * un filtro prezzo, quindi usiamo bucket fissi sul prezzo effettivo.
+ * `max: null` = fascia aperta verso l'alto ("Oltre €…").
+ */
+const PRICE_BUCKETS: ReadonlyArray<{ min: number; max: number | null }> = [
+  { min: 0, max: 50 },
+  { min: 50, max: 100 },
+  { min: 100, max: 200 },
+  { min: 200, max: null },
+];
 
 /** Gruppo di filtri utente (seed tassonomia + extra runtime), dal server. */
 export interface ShopFilterGroup {
@@ -44,9 +62,24 @@ interface FilterState {
   sub: string;
   /** Valori `userFilters` selezionati (etichette canoniche). */
   filters: string[];
+  /** Filtro rapido "In Saldo" (?saldo=true). */
+  onSale: boolean;
+  /** Filtro rapido "Novità" (?novita=true). */
+  isNew: boolean;
+  /** Fascia di prezzo selezionata (?prezzoMin / ?prezzoMax). null = nessuna. */
+  priceMin: number | null;
+  priceMax: number | null;
 }
 
-const EMPTY_STATE: FilterState = { macro: '', sub: '', filters: [] };
+const EMPTY_STATE: FilterState = {
+  macro: '',
+  sub: '',
+  filters: [],
+  onSale: false,
+  isNew: false,
+  priceMin: null,
+  priceMax: null,
+};
 
 /**
  * Browser dello shop (replica `ShopPageController` di Flutter, nuovo sistema
@@ -111,7 +144,22 @@ export function ShopBrowser({
         seen.add(key);
         filters.push(value);
       }
-      return { macro, sub, filters };
+
+      // Filtri rapidi.
+      const num = (v: string | null): number | null => {
+        if (v == null || v === '') return null;
+        const n = Number(v);
+        return Number.isFinite(n) ? n : null;
+      };
+      return {
+        macro,
+        sub,
+        filters,
+        onSale: params.get('saldo') === 'true',
+        isNew: params.get('novita') === 'true',
+        priceMin: num(params.get('prezzoMin')),
+        priceMax: num(params.get('prezzoMax')),
+      };
     },
     [macros],
   );
@@ -125,6 +173,10 @@ export function ShopBrowser({
         const group = groupByValue.get(norm(v)) ?? OTHER_GROUP;
         params.append('filtro', `${group}:${v}`);
       }
+      if (s.onSale) params.set('saldo', 'true');
+      if (s.isNew) params.set('novita', 'true');
+      if (s.priceMin != null) params.set('prezzoMin', String(s.priceMin));
+      if (s.priceMax != null) params.set('prezzoMax', String(s.priceMax));
       return params.toString();
     },
     [groupByValue],
@@ -187,15 +239,32 @@ export function ShopBrowser({
   }, [state.filters, groupByValue]);
 
   const filtered = useMemo(() => {
-    if (selectedByGroup.size === 0) return subFiltered;
-    const groups = Array.from(selectedByGroup.values());
-    return subFiltered.filter((c) => {
-      const have = new Set(c.userFilters.map(norm));
-      return groups.every((wanted) =>
-        Array.from(wanted).some((v) => have.has(v)),
+    let list = subFiltered;
+
+    // userFilters: OR dentro al gruppo, AND tra gruppi.
+    if (selectedByGroup.size > 0) {
+      const groups = Array.from(selectedByGroup.values());
+      list = list.filter((c) => {
+        const have = new Set(c.userFilters.map(norm));
+        return groups.every((wanted) =>
+          Array.from(wanted).some((v) => have.has(v)),
+        );
+      });
+    }
+
+    // Filtri rapidi, in AND con tutto il resto.
+    if (state.onSale) list = list.filter((c) => c.isOnSale);
+    if (state.isNew) list = list.filter((c) => c.isNew);
+    if (state.priceMin != null || state.priceMax != null) {
+      const min = state.priceMin ?? 0;
+      const max = state.priceMax; // null = fascia aperta
+      list = list.filter(
+        (c) => c.effectivePrice >= min && (max == null || c.effectivePrice < max),
       );
-    });
-  }, [subFiltered, selectedByGroup]);
+    }
+
+    return list;
+  }, [subFiltered, selectedByGroup, state.onSale, state.isNew, state.priceMin, state.priceMax]);
 
   // Opzioni del pannello: i valori `userFilters` presenti nei prodotti della
   // macro/sottocategoria corrente, raggruppati nell'ordine della tassonomia.
@@ -239,13 +308,15 @@ export function ShopBrowser({
 
   // ── Azioni ─────────────────────────────────────────────────────────────────
 
-  // Cambiando macro si azzerano sottocategoria e filtri (come setMacro Flutter).
+  // Cambiando macro si azzerano sottocategoria e TUTTI i filtri (come setMacro
+  // Flutter, che resetta a `const ShopFilters()`).
   const selectMacro = (macro: string) =>
-    applyState({ macro, sub: '', filters: [] }, true);
+    applyState({ ...EMPTY_STATE, macro }, true);
 
   const selectSub = (macro: string, sub: string) =>
     applyState(
-      { macro, sub, filters: macro === state.macro ? state.filters : [] },
+      // Stessa macro: si conservano filtri utente e rapidi; macro nuova: reset.
+      macro === state.macro ? { ...state, sub } : { ...EMPTY_STATE, macro, sub },
       true,
     );
 
@@ -258,7 +329,30 @@ export function ShopBrowser({
     applyState({ ...state, filters }, true);
   };
 
-  const clearFilters = () => applyState({ ...state, filters: [] }, true);
+  // ── Filtri rapidi ────────────────────────────────────────────────────────
+  const toggleOnSale = () => applyState({ ...state, onSale: !state.onSale }, true);
+  const toggleNew = () => applyState({ ...state, isNew: !state.isNew }, true);
+  const setPriceBucket = (min: number, max: number | null) => {
+    const active = state.priceMin === min && state.priceMax === max;
+    applyState(
+      { ...state, priceMin: active ? null : min, priceMax: active ? null : max },
+      true,
+    );
+  };
+  const clearPrice = () =>
+    applyState({ ...state, priceMin: null, priceMax: null }, true);
+
+  // Rimuove TUTTI i filtri (utente + rapidi), mantiene macro/sottocategoria.
+  const clearFilters = () =>
+    applyState(
+      { ...state, filters: [], onSale: false, isNew: false, priceMin: null, priceMax: null },
+      true,
+    );
+
+  const priceActive = state.priceMin != null || state.priceMax != null;
+  /** Etichetta di una fascia: "€0 - €50" oppure "Oltre €200". */
+  const priceLabel = (min: number, max: number | null) =>
+    max != null ? `€${min} - €${max}` : t('priceOver', { min });
 
   // ── Paginazione / scroll infinito ──────────────────────────────────────────
 
@@ -289,6 +383,14 @@ export function ShopBrowser({
     [state.filters],
   );
 
+  // Numero di filtri attivi (utente + rapidi): badge sul bottone e visibilità
+  // del link "rimuovi tutti".
+  const activeCount =
+    state.filters.length +
+    (state.onSale ? 1 : 0) +
+    (state.isNew ? 1 : 0) +
+    (priceActive ? 1 : 0);
+
   return (
     <>
       <div className="mb-4">
@@ -302,38 +404,65 @@ export function ShopBrowser({
         />
       </div>
 
-      {/* Bottone Filtri + contatore risultati. */}
+      {/* Bottone Filtri + contatore risultati. Il pannello è sempre disponibile
+          (i filtri rapidi Saldo/Novità/Prezzo esistono a prescindere). */}
       <div className="mb-4 flex items-center justify-between gap-3">
-        {panelGroups.length > 0 ? (
-          <button
-            type="button"
-            onClick={() => setPanelOpen((o) => !o)}
-            aria-expanded={panelOpen}
-            className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition ${
-              panelOpen || state.filters.length > 0
-                ? 'border-brand-pink text-brand-pink'
-                : 'border-black/15 text-ink hover:border-brand-pink/60'
-            }`}
-          >
-            <FunnelIcon />
-            {t('filters')}
-            {state.filters.length > 0 && (
-              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-pink px-1 text-xs font-semibold text-white">
-                {state.filters.length}
-              </span>
-            )}
-          </button>
-        ) : (
-          <span />
-        )}
+        <button
+          type="button"
+          onClick={() => setPanelOpen((o) => !o)}
+          aria-expanded={panelOpen}
+          className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition ${
+            panelOpen || activeCount > 0
+              ? 'border-brand-pink text-brand-pink'
+              : 'border-black/15 text-ink hover:border-brand-pink/60'
+          }`}
+        >
+          <FunnelIcon />
+          {t('filters')}
+          {activeCount > 0 && (
+            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-pink px-1 text-xs font-semibold text-white">
+              {activeCount}
+            </span>
+          )}
+        </button>
         <p className="text-sm text-ink/55">
           {t('resultsCount', { count: filtered.length })}
         </p>
       </div>
 
-      {/* Pannello filtri utente, raggruppati per gruppo. */}
-      {panelOpen && panelGroups.length > 0 && (
+      {/* Pannello filtri: in cima i filtri rapidi (Saldo / Novità / Prezzo),
+          poi i filtri utente raggruppati. */}
+      {panelOpen && (
         <div className="mb-4 space-y-4 rounded-2xl border border-black/10 p-4">
+          {/* ── Filtri rapidi ──────────────────────────────────────────────── */}
+          <div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink/45">
+              {t('quickFilters')}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <QuickChip selected={state.onSale} onClick={toggleOnSale}>
+                {t('onSale')}
+              </QuickChip>
+              <QuickChip selected={state.isNew} onClick={toggleNew}>
+                {t('isNew')}
+              </QuickChip>
+            </div>
+            <p className="mb-2 mt-3 text-xs font-semibold uppercase tracking-wide text-ink/45">
+              {t('priceRange')}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {PRICE_BUCKETS.map((b) => (
+                <QuickChip
+                  key={`${b.min}-${b.max ?? 'plus'}`}
+                  selected={state.priceMin === b.min && state.priceMax === b.max}
+                  onClick={() => setPriceBucket(b.min, b.max)}
+                >
+                  {priceLabel(b.min, b.max)}
+                </QuickChip>
+              ))}
+            </div>
+          </div>
+
           {panelGroups.map((g) => (
             <div key={g.group}>
               <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink/45">
@@ -366,7 +495,7 @@ export function ShopBrowser({
             </div>
           ))}
           <div className="flex items-center justify-end gap-4 border-t border-black/5 pt-3">
-            {state.filters.length > 0 && (
+            {activeCount > 0 && (
               <button
                 type="button"
                 onClick={clearFilters}
@@ -386,9 +515,33 @@ export function ShopBrowser({
         </div>
       )}
 
-      {/* Chip dei filtri attivi (la riga sparisce se non ce ne sono). */}
-      {state.filters.length > 0 && (
+      {/* Chip dei filtri attivi (la riga sparisce se non ce ne sono). I filtri
+          rapidi vengono prima, poi i filtri utente. */}
+      {activeCount > 0 && (
         <div className="mb-5 flex flex-wrap gap-2">
+          {state.onSale && (
+            <ActiveChip
+              label={t('onSale')}
+              removeLabel={t('removeFilter', { filter: t('onSale') })}
+              onRemove={toggleOnSale}
+            />
+          )}
+          {state.isNew && (
+            <ActiveChip
+              label={t('isNew')}
+              removeLabel={t('removeFilter', { filter: t('isNew') })}
+              onRemove={toggleNew}
+            />
+          )}
+          {priceActive && (
+            <ActiveChip
+              label={priceLabel(state.priceMin ?? 0, state.priceMax)}
+              removeLabel={t('removeFilter', {
+                filter: priceLabel(state.priceMin ?? 0, state.priceMax),
+              })}
+              onRemove={clearPrice}
+            />
+          )}
           {state.filters.map((v) => (
             <ActiveChip
               key={norm(v)}
@@ -421,6 +574,32 @@ export function ShopBrowser({
       {/* Sentinel per lo scroll infinito. */}
       {hasMore && <div ref={sentinelRef} aria-hidden className="h-px w-full" />}
     </>
+  );
+}
+
+/** Chip toggle del pannello filtri rapidi (Saldo / Novità / fasce prezzo). */
+function QuickChip({
+  selected,
+  onClick,
+  children,
+}: {
+  selected: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={selected}
+      onClick={onClick}
+      className={`whitespace-nowrap rounded-full border px-3.5 py-1.5 text-sm transition ${
+        selected
+          ? 'border-brand-pink bg-brand-pink text-white'
+          : 'border-black/15 text-ink hover:border-brand-pink/60'
+      }`}
+    >
+      {children}
+    </button>
   );
 }
 
