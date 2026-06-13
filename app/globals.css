@@ -138,6 +138,53 @@ body {
     }
   }
 
+  /* ── Floating label dei form (replica del TextFormField Material del
+     Flutter): la label riposa DENTRO al campo, grigio scuro #1D1D1F (il
+     colore onSurface del tema Flutter); al focus o a campo compilato sale a
+     cavallo del bordo alto del campo, 12px semibold (floatingLabelStyle
+     w600), e in focus diventa rosa brand come la label Material.
+     I controlli portano `.float-control`; la <span.float-label> è il sibling
+     successivo. La regola :not(:placeholder-shown) richiede [placeholder]
+     così i controlli senza placeholder (select, input date invisibile) NON
+     flottano da soli: per quelli si aggiunge `.float-up` quando hanno un
+     valore. */
+  .float-label {
+    pointer-events: none;
+    position: absolute;
+    left: 24px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 15px;
+    color: #1d1d1f;
+    transition:
+      top 200ms ease,
+      font-size 200ms ease,
+      color 200ms ease;
+  }
+  /* Textarea: la label riposa allineata alla prima riga, non centrata. */
+  .float-label--area {
+    top: 26px;
+  }
+  /* Campo telefono: la label vive nel wrapper dell'input (dopo il prefisso). */
+  .float-label--phone {
+    left: 0;
+  }
+  .float-control:focus ~ .float-label,
+  .float-control[placeholder]:not(:placeholder-shown) ~ .float-label,
+  .float-up ~ .float-label {
+    top: 0;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  /* Nel telefono il bordo alto del pill è 14px sopra il wrapper dell'input. */
+  .float-control:focus ~ .float-label--phone,
+  .float-control[placeholder]:not(:placeholder-shown) ~ .float-label--phone {
+    top: -14px;
+  }
+  .float-control:focus ~ .float-label {
+    color: #ee67ab;
+  }
+
   /* Logo navbar: oscillazione del blob (2 cicli) all'hover, solo desktop.
      Il testo "Shubihubi" segue con 100ms di delay. */
   @media (hover: hover) and (min-width: 900px) {

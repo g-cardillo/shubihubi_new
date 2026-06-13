@@ -39,8 +39,14 @@ const RETURN_TRIGGER = 'reason_return';
 const NO_CONFIRM_TRIGGER = 'reason_no_email';
 const DAMAGED_TRIGGER = 'reason_damaged';
 
+/**
+ * Pill input su fondo crema (#FFF3CC). `float-control` + placeholder " "
+ * abilitano la floating label (vedi `.float-label` in globals.css): etichetta
+ * dentro al campo in grigio scuro, sale sul bordo alto al focus / a campo
+ * compilato — replica del `TextFormField` Material del Flutter.
+ */
 const PILL =
-  'w-full rounded-full border-0 bg-brand-cream px-6 py-[14px] text-[15px] text-ink outline-none ring-brand-pink/50 transition placeholder:text-[#b9a86a] focus:ring-2';
+  'float-control w-full rounded-full border-0 bg-brand-cream px-6 py-[14px] text-[15px] text-ink outline-none ring-brand-pink/50 transition placeholder:text-transparent focus:ring-2';
 
 interface Photo {
   filename: string;
@@ -216,14 +222,14 @@ export function SupportForm() {
       <div className="mt-5 flex flex-col gap-3.5">
         {/* Nome + Cognome */}
         <Row>
-          <Field value={f.name} onChange={set('name')} placeholder={tf('form_name_label')} error={errors.name} />
-          <Field value={f.lastName} onChange={set('lastName')} placeholder={tf('form_last_name')} />
+          <Field value={f.name} onChange={set('name')} label={tf('form_name_label')} error={errors.name} />
+          <Field value={f.lastName} onChange={set('lastName')} label={tf('form_last_name')} />
         </Row>
 
         {/* Email + Conferma email */}
         <Row>
-          <Field type="email" value={f.email} onChange={set('email')} placeholder={tf('form_email_label')} error={errors.email} />
-          <Field type="email" value={f.emailConfirm} onChange={set('emailConfirm')} placeholder={t('form_email_confirm_label')} error={errors.emailConfirm} />
+          <Field type="email" value={f.email} onChange={set('email')} label={tf('form_email_label')} error={errors.email} />
+          <Field type="email" value={f.emailConfirm} onChange={set('emailConfirm')} label={t('form_email_confirm_label')} error={errors.emailConfirm} />
         </Row>
 
         {/* Numero ordine + Telefono */}
@@ -231,28 +237,31 @@ export function SupportForm() {
           <Field
             value={f.orderNumber}
             onChange={set('orderNumber')}
-            placeholder={orderNumberRequired ? t('form_order_label') : t('form_order_label_optional')}
+            label={orderNumberRequired ? t('form_order_label') : t('form_order_label_optional')}
             error={errors.orderNumber}
           />
           <div className="flex-1">
-            <div className="flex items-center gap-2 rounded-full bg-brand-cream px-3 py-[14px]">
+            <div className="relative flex items-center gap-2 rounded-full bg-brand-cream px-3 py-[14px]">
               <select
                 value={prefix}
                 onChange={(e) => setPrefix(e.target.value)}
-                className="border-0 bg-transparent pl-2 text-[15px] text-ink outline-none"
+                className="relative z-10 border-0 bg-transparent pl-2 text-[15px] text-ink outline-none"
                 aria-label="Prefisso"
               >
                 {PREFIXES.map((p) => (
                   <option key={p} value={p}>{p}</option>
                 ))}
               </select>
-              <input
-                type="tel"
-                value={f.phone}
-                onChange={set('phone')}
-                placeholder={tf('form_phone_label')}
-                className="w-full border-0 bg-transparent pr-3 text-[15px] text-ink outline-none placeholder:text-[#b9a86a]"
-              />
+              <div className="relative flex-1">
+                <input
+                  type="tel"
+                  value={f.phone}
+                  onChange={set('phone')}
+                  placeholder=" "
+                  className="float-control w-full border-0 bg-transparent pr-3 text-[15px] text-ink outline-none placeholder:text-transparent"
+                />
+                <span className="float-label float-label--phone">{tf('form_phone_label')}</span>
+              </div>
             </div>
           </div>
         </Row>
@@ -323,13 +332,16 @@ export function SupportForm() {
         )}
 
         {/* Messaggio */}
-        <textarea
-          value={f.message}
-          onChange={set('message')}
-          placeholder={t('form_message_hint')}
-          rows={6}
-          className="w-full resize-y rounded-[20px] border-0 bg-brand-cream px-6 py-4 text-[15px] text-ink outline-none ring-brand-pink/50 transition placeholder:text-[#b9a86a] focus:ring-2"
-        />
+        <div className="relative">
+          <textarea
+            value={f.message}
+            onChange={set('message')}
+            placeholder=" "
+            rows={6}
+            className="float-control w-full resize-y rounded-[20px] border-0 bg-brand-cream px-6 py-4 text-[15px] text-ink outline-none ring-brand-pink/50 transition placeholder:text-transparent focus:ring-2"
+          />
+          <span className="float-label float-label--area">{t('form_message_hint')}</span>
+        </div>
       </div>
 
       {status && (
@@ -372,12 +384,16 @@ function Row({ children }: { children: React.ReactNode }) {
 }
 
 function Field({
+  label,
   error,
   ...props
-}: React.InputHTMLAttributes<HTMLInputElement> & { error?: string }) {
+}: React.InputHTMLAttributes<HTMLInputElement> & { label: string; error?: string }) {
   return (
     <div className="flex-1">
-      <input {...props} className={PILL} />
+      <div className="relative">
+        <input {...props} placeholder=" " className={PILL} />
+        <span className="float-label">{label}</span>
+      </div>
       <FieldError error={error} />
     </div>
   );
@@ -395,18 +411,21 @@ function Select({
   children: React.ReactNode;
 }) {
   return (
-    <select
-      value={value}
-      onChange={onChange}
-      className={`${PILL} appearance-none bg-[length:18px] bg-[right_1.25rem_center] bg-no-repeat ${value ? 'text-ink' : 'text-[#b9a86a]'}`}
-      style={{
-        backgroundImage:
-          "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23ee67ab' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>\")",
-      }}
-    >
-      <option value="" disabled>{placeholder}</option>
-      {children}
-    </select>
+    <div className="relative">
+      <select
+        value={value}
+        onChange={onChange}
+        className={`${PILL} appearance-none bg-[length:18px] bg-[right_1.25rem_center] bg-no-repeat text-ink ${value ? 'float-up' : ''}`}
+        style={{
+          backgroundImage:
+            "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23ee67ab' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>\")",
+        }}
+      >
+        <option value="" disabled />
+        {children}
+      </select>
+      <span className="float-label">{placeholder}</span>
+    </div>
   );
 }
 

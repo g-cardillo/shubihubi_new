@@ -7,6 +7,7 @@ import { macroById } from '@/lib/admin/taxonomy';
 import type { Product } from '@/lib/types/product';
 import { ProductCard } from '@/components/product/ProductCard';
 import { ShopBrowser, type ShopCard } from '@/components/shop/ShopBrowser';
+import { SupportFab } from '@/components/shop/SupportFab';
 import type { ShopMacro } from '@/components/shop/CategoryBar';
 
 // ISR: la pagina shop si rigenera al massimo ogni 5 minuti.
@@ -122,6 +123,7 @@ export default async function ShopPage({
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6">
       <ShopBrowser cards={cards} macros={macros} filterGroups={filterGroups} />
+      <SupportFab />
     </div>
   );
 }

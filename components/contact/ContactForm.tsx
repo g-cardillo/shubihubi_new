@@ -10,9 +10,15 @@ const PREFIXES = ['+39', '+1', '+44', '+33', '+34', '+49', '+41'];
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-/** Pill input rosa chiaro (#FFD4D9), bordi arrotondati — replica `_Field`. */
+/**
+ * Pill input rosa chiaro (#FFD4D9), bordi arrotondati — replica `_Field`.
+ * `float-control` + placeholder " " abilitano la floating label (vedi
+ * `.float-label` in globals.css): l'etichetta riposa dentro al campo in grigio
+ * scuro e sale sul bordo alto al focus / a campo compilato, come il
+ * `TextFormField` Material del Flutter.
+ */
 const PILL =
-  'w-full rounded-full border-0 bg-brand-pinkLight px-6 py-[14px] text-[15px] text-ink outline-none ring-brand-pink/50 transition placeholder:text-brand-pinkHot/70 focus:ring-2';
+  'float-control w-full rounded-full border-0 bg-brand-pinkLight px-6 py-[14px] text-[15px] text-ink outline-none ring-brand-pink/50 transition placeholder:text-transparent focus:ring-2';
 
 /**
  * Form "Scrivimi" della pagina Contatti (replica `ContactFormWidget`).
@@ -142,72 +148,81 @@ export function ContactForm() {
 
       <div className="mt-5 flex flex-col gap-3.5">
         <Row>
-          <Field name="name" value={f.name} onChange={set('name')} placeholder={t('form_name_label')} error={errors.name} />
-          <Field name="lastName" value={f.lastName} onChange={set('lastName')} placeholder={t('lastname_label')} />
+          <Field name="name" value={f.name} onChange={set('name')} label={t('form_name_label')} error={errors.name} />
+          <Field name="lastName" value={f.lastName} onChange={set('lastName')} label={t('lastname_label')} />
         </Row>
         <Row>
-          <Field name="email" type="email" value={f.email} onChange={set('email')} placeholder={t('form_email_label')} error={errors.email} />
-          <Field name="emailConfirm" type="email" value={f.emailConfirm} onChange={set('emailConfirm')} placeholder={`${t('form_email_confirm')} *`} error={errors.emailConfirm} />
+          <Field name="email" type="email" value={f.email} onChange={set('email')} label={t('form_email_label')} error={errors.email} />
+          <Field name="emailConfirm" type="email" value={f.emailConfirm} onChange={set('emailConfirm')} label={`${t('form_email_confirm')} *`} error={errors.emailConfirm} />
         </Row>
         <Row>
-          <Field name="yourLocation" value={f.yourLocation} onChange={set('yourLocation')} placeholder={t('form_location_label')} error={errors.yourLocation} />
+          <Field name="yourLocation" value={f.yourLocation} onChange={set('yourLocation')} label={t('form_location_label')} error={errors.yourLocation} />
           {/* Telefono con prefisso */}
           <div className="flex-1">
-            <div className="flex items-center gap-2 rounded-full bg-brand-pinkLight px-3 py-[14px]">
+            <div className="relative flex items-center gap-2 rounded-full bg-brand-pinkLight px-3 py-[14px]">
               <select
                 value={prefix}
                 onChange={(e) => setPrefix(e.target.value)}
-                className="border-0 bg-transparent pl-2 text-[15px] text-ink outline-none"
+                className="relative z-10 border-0 bg-transparent pl-2 text-[15px] text-ink outline-none"
                 aria-label="Prefisso"
               >
                 {PREFIXES.map((p) => (
                   <option key={p} value={p}>{p}</option>
                 ))}
               </select>
-              <input
-                type="tel"
-                value={f.phone}
-                onChange={set('phone')}
-                placeholder={t('form_phone_label')}
-                className="w-full border-0 bg-transparent pr-3 text-[15px] text-ink outline-none placeholder:text-brand-pinkHot/70"
-              />
+              <div className="relative flex-1">
+                <input
+                  type="tel"
+                  value={f.phone}
+                  onChange={set('phone')}
+                  placeholder=" "
+                  className="float-control w-full border-0 bg-transparent pr-3 text-[15px] text-ink outline-none placeholder:text-transparent"
+                />
+                <span className="float-label float-label--phone">{t('form_phone_label')}</span>
+              </div>
             </div>
           </div>
         </Row>
         <Row>
-          <DateField min={min} max={max} value={f.date} onChange={set('date')} placeholder={t('form_event_date_label')} error={errors.date} />
-          <Field name="eventLocation" value={f.eventLocation} onChange={set('eventLocation')} placeholder={t('form_event_location_label')} error={errors.eventLocation} />
+          <DateField min={min} max={max} value={f.date} onChange={set('date')} label={t('form_event_date_label')} error={errors.date} />
+          <Field name="eventLocation" value={f.eventLocation} onChange={set('eventLocation')} label={t('form_event_location_label')} error={errors.eventLocation} />
         </Row>
         <Row>
-          <Field name="eventType" value={f.eventType} onChange={set('eventType')} placeholder={t('form_event_type_label')} error={errors.eventType} />
-          <Field name="guestsNumber" type="number" value={f.guestsNumber} onChange={set('guestsNumber')} placeholder={t('form_guests_label')} error={errors.guestsNumber} />
+          <Field name="eventType" value={f.eventType} onChange={set('eventType')} label={t('form_event_type_label')} error={errors.eventType} />
+          <Field name="guestsNumber" type="number" value={f.guestsNumber} onChange={set('guestsNumber')} label={t('form_guests_label')} error={errors.guestsNumber} />
         </Row>
 
         {/* Servizio (dropdown) */}
         <div>
-          <select
-            value={f.serviceType}
-            onChange={set('serviceType')}
-            className={`${PILL} appearance-none bg-[length:18px] bg-[right_1.25rem_center] bg-no-repeat ${f.serviceType ? 'text-ink' : 'text-brand-pinkHot/70'}`}
-            style={{ backgroundImage: "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23ee67ab' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>\")" }}
-          >
-            <option value="" disabled>{t('form_service_label')}</option>
-            {services.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
+          <div className="relative">
+            <select
+              value={f.serviceType}
+              onChange={set('serviceType')}
+              className={`${PILL} appearance-none bg-[length:18px] bg-[right_1.25rem_center] bg-no-repeat text-ink ${f.serviceType ? 'float-up' : ''}`}
+              style={{ backgroundImage: "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23ee67ab' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>\")" }}
+            >
+              <option value="" disabled />
+              {services.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+            <span className="float-label">{t('form_service_label')}</span>
+          </div>
           <FieldError error={errors.serviceType} />
         </div>
 
         {/* Messaggio */}
         <div>
-          <textarea
-            value={f.message}
-            onChange={set('message')}
-            placeholder={t('form_message_label')}
-            rows={5}
-            className="w-full resize-y rounded-[20px] border-0 bg-brand-pinkLight px-6 py-4 text-[15px] text-ink outline-none ring-brand-pink/50 transition placeholder:text-brand-pinkHot/70 focus:ring-2"
-          />
+          <div className="relative">
+            <textarea
+              value={f.message}
+              onChange={set('message')}
+              placeholder=" "
+              rows={5}
+              className="float-control w-full resize-y rounded-[20px] border-0 bg-brand-pinkLight px-6 py-4 text-[15px] text-ink outline-none ring-brand-pink/50 transition placeholder:text-transparent focus:ring-2"
+            />
+            <span className="float-label float-label--area">{t('form_message_label')}</span>
+          </div>
           <FieldError error={errors.message} />
         </div>
       </div>
@@ -251,12 +266,16 @@ function Row({ children }: { children: React.ReactNode }) {
 }
 
 function Field({
+  label,
   error,
   ...props
-}: React.InputHTMLAttributes<HTMLInputElement> & { error?: string }) {
+}: React.InputHTMLAttributes<HTMLInputElement> & { label: string; error?: string }) {
   return (
     <div className="flex-1">
-      <input {...props} className={PILL} />
+      <div className="relative">
+        <input {...props} placeholder=" " className={PILL} />
+        <span className="float-label">{label}</span>
+      </div>
       <FieldError error={error} />
     </div>
   );
@@ -273,14 +292,14 @@ function DateField({
   max,
   value,
   onChange,
-  placeholder,
+  label,
   error,
 }: {
   min: string;
   max: string;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  placeholder: string;
+  label: string;
   error?: string;
 }) {
   const ref = useRef<HTMLInputElement>(null);
@@ -297,9 +316,9 @@ function DateField({
     }
   };
 
-  const display = value
-    ? value.split('-').reverse().join('/') // yyyy-mm-dd → dd/mm/yyyy
-    : placeholder;
+  // yyyy-mm-dd → dd/mm/yyyy; vuoto quando non selezionata (la floating label
+  // resta dentro al campo finché non c'è un valore).
+  const display = value ? value.split('-').reverse().join('/') : '';
 
   return (
     <div className="flex-1">
@@ -307,16 +326,15 @@ function DateField({
         <button
           type="button"
           onClick={open}
-          className={`${PILL} flex items-center justify-between text-left`}
+          className={`${PILL} flex items-center justify-between text-left ${value ? 'float-up' : ''}`}
         >
-          <span className={value ? 'text-ink' : 'text-brand-pinkHot/70'}>
-            {display}
-          </span>
+          <span className="text-ink">{display}</span>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <rect x="3" y="4.5" width="18" height="16" rx="2.5" stroke="#ee67ab" strokeWidth="1.6" />
             <path d="M3 9h18M8 3v3M16 3v3" stroke="#ee67ab" strokeWidth="1.6" strokeLinecap="round" />
           </svg>
         </button>
+        <span className="float-label">{label}</span>
         {/* Input reale: invisibile, copre il pill per ricevere il click e mostrare
             il picker; gestisce anche il cambio valore. */}
         <input
@@ -330,7 +348,7 @@ function DateField({
             e.preventDefault();
             open();
           }}
-          aria-label={placeholder}
+          aria-label={label}
           className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
         />
       </div>
