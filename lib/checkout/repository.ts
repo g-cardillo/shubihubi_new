@@ -21,6 +21,11 @@ export interface DraftOrderPayload {
     qty: number;
     options: Record<string, string>;
     note?: string;
+    /**
+     * Marker CLIENT-ONLY usato da `createDraftOrder` per escludere le righe
+     * esaurite: NON viene inviato alla Cloud Function (backend invariato).
+     */
+    soldOut?: boolean;
   }>;
   customer: {
     email: string;
@@ -49,8 +54,24 @@ export interface DraftOrderPayload {
 export async function createDraftOrder(
   payload: DraftOrderPayload,
 ): Promise<string | null> {
+  // Difesa in profondità: escludi le righe esaurite prima dell'ordine. Se non
+  // resta nulla di acquistabile, errore chiaro (non si crea un ordine vuoto).
+  const availableItems = payload.items.filter((it) => !it.soldOut);
+  if (availableItems.length === 0) {
+    throw new Error('cart_no_available_items');
+  }
+  // Rimuovi il marker client-only `soldOut`: la Cloud Function riceve lo stesso
+  // shape di prima (backend invariato).
+  const cleanItems = availableItems.map((it) => ({
+    productId: it.productId,
+    qty: it.qty,
+    options: it.options,
+    ...(it.note ? { note: it.note } : {}),
+  }));
+  const cleanPayload: DraftOrderPayload = { ...payload, items: cleanItems };
+
   try {
-    const res = await httpsCallable(functions, 'createDraftOrder')(payload);
+    const res = await httpsCallable(functions, 'createDraftOrder')(cleanPayload);
     return (res.data as { orderId: string }).orderId;
   } catch (err) {
     console.error('createDraftOrder failed:', err);

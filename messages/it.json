@@ -92,6 +92,8 @@
     "customer": "Dati cliente",
     "customs_warning": "I dazi doganali e l'IVA di importazione non sono inclusi e saranno a carico del destinatario al momento della consegna.",
     "empty": "Carrello vuoto",
+    "no_available": "Il tuo carrello non contiene prodotti disponibili",
+    "err_order_create": "Si è verificato un errore durante la creazione dell'ordine. Riprova.",
     "form_address": "Indirizzo",
     "form_address_notes": "Interno / Note",
     "form_cap": "CAP",

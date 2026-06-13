@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import {
   createGiftCard,
   deleteGiftCard,
+  functionErrorMessage,
   streamGiftCards,
 } from '@/lib/admin/repository';
 import type { GiftCardDoc } from '@/lib/admin/types';
@@ -40,7 +41,7 @@ export function GiftCardsTab() {
       setCode('');
       setAmount('');
     } catch (e) {
-      setFormError(`Errore: ${(e as Error).message}`);
+      setFormError(`Errore: ${functionErrorMessage(e)}`);
     } finally {
       setSaving(false);
     }
@@ -64,7 +65,11 @@ export function GiftCardsTab() {
         <Field label="Codice buono" width="w-44">
           <input
             value={code}
-            onChange={(e) => setCode(e.target.value.toUpperCase())}
+            onChange={(e) =>
+              // Il codice diventa l'ID documento Firestore: solo A-Z 0-9 _ -
+              // (niente '/', spazi o simboli, che lo renderebbero invalido).
+              setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, ''))
+            }
             placeholder="es. BUONO50"
             className="admin-input uppercase"
           />

@@ -39,9 +39,18 @@ export function eur(value: number): string {
   return `€${value.toFixed(2).replace('.', ',')}`;
 }
 
-/** Quantità totale articoli nel carrello. */
+/** Quantità totale articoli nel carrello (incluse le righe esaurite). */
 export function totalQty(items: CartItem[]): number {
   return items.reduce((s, i) => s + i.qty, 0);
+}
+
+/**
+ * Quantità degli articoli DISPONIBILI (esclude i soldOut): è il numero mostrato
+ * nel badge della navbar — un prodotto esaurito non conta come articolo
+ * acquistabile. Replica `availableItems` di `CartController` Flutter.
+ */
+export function availableQty(items: CartItem[]): number {
+  return items.filter((i) => !i.soldOut).reduce((s, i) => s + i.qty, 0);
 }
 
 /** Subtotale: somma delle righe NON esaurite (i soldOut non contano). */

@@ -7,7 +7,7 @@ import { getIdTokenResult, onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/lib/firebase/client';
 import { Link, usePathname, useRouter } from '@/i18n/navigation';
 import { useCartStore } from '@/lib/cart/store';
-import { totalQty } from '@/lib/types/cart';
+import { availableQty } from '@/lib/types/cart';
 import {
   IconHome,
   IconShop,
@@ -86,7 +86,8 @@ export function Navbar() {
 
   const toggleCart = useCartStore((s) => s.toggle);
   const hydrated = useCartStore((s) => s.hydrated);
-  const count = useCartStore((s) => totalQty(s.items));
+  // Il badge conta solo gli articoli DISPONIBILI: i soldOut non sono acquistabili.
+  const count = useCartStore((s) => availableQty(s.items));
 
   // Pop del badge carrello quando la quantità AUMENTA: incrementare la key
   // rimonta lo span e fa ripartire l'animazione `badge-pop`. Il baseline parte

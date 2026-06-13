@@ -14,6 +14,7 @@ import {
   MIN_ORDER_AMOUNT,
 } from '@/lib/types/cart';
 import { fetchCartProduct, type CartProductInfo } from '@/lib/cart/products';
+import { useSoldOutReconcile } from '@/lib/cart/useSoldOutReconcile';
 import { BRAND_BLUR } from '@/lib/utils/blurPlaceholder';
 import { framePriceFor, giftPriceFor } from '@/lib/cart/options';
 import { ITALY_FREE_THRESHOLD } from '@/lib/checkout/shipping';
@@ -33,6 +34,10 @@ export function CartDrawer() {
   const isOpen = useCartStore((s) => s.isOpen);
   const close = useCartStore((s) => s.close);
   const items = useCartStore((s) => s.items);
+
+  // Rilegge lo stato soldOut fresco da Firestore e aggiorna lo store: un
+  // prodotto può essersi esaurito dopo l'aggiunta al carrello.
+  useSoldOutReconcile();
 
   // Idratazione prodotti: productId → info (null = prodotto non trovato).
   const [products, setProducts] = useState<Record<string, CartProductInfo | null>>({});
@@ -183,6 +188,10 @@ function CartLine({ item, info }: { item: CartItem; info: CartProductInfo | null
   };
   const optionEntries = Object.entries(item.options);
 
+  // Stato esaurito EFFETTIVO: flag della riga OR valore fresco dal prodotto
+  // idratato (il reconcile riallinea poi lo store, ma qui la UI è già corretta).
+  const soldOut = item.soldOut || info?.isSoldOut === true;
+
   return (
     <li className="flex gap-3 py-4">
       <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-[10px] bg-black/[0.06]">
@@ -194,14 +203,24 @@ function CartLine({ item, info }: { item: CartItem; info: CartProductInfo | null
             sizes="80px"
             placeholder="blur"
             blurDataURL={BRAND_BLUR}
-            className="object-cover"
+            className={`object-cover ${soldOut ? 'opacity-60 blur-[2px]' : ''}`}
           />
+        )}
+        {/* Overlay + badge "Esaurito" scuro come nella griglia shop. */}
+        {soldOut && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-neutral-500/55">
+            <span className="rounded-full bg-black/60 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.06em] text-white">
+              {tp('badge.soldOut')}
+            </span>
+          </div>
         )}
       </div>
 
       <div className="flex flex-1 flex-col gap-1">
         <div className="flex items-start justify-between gap-2">
-          <p className="text-sm font-bold text-ink">{item.title}</p>
+          <p className={`text-sm font-bold text-ink ${soldOut ? 'opacity-50' : ''}`}>
+            {item.title}
+          </p>
           <button
             type="button"
             onClick={() => remove(key)}
@@ -211,12 +230,14 @@ function CartLine({ item, info }: { item: CartItem; info: CartProductInfo | null
           </button>
         </div>
 
-        {item.soldOut && (
-          <span className="text-xs font-bold text-brand-red">{tp('badge.soldOut')}</span>
+        {soldOut && (
+          <span className="w-fit rounded bg-brand-red px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-[0.05em] text-white">
+            {tp('badge.soldOut')}
+          </span>
         )}
 
         {optionEntries.length > 0 && (
-          <ul className="flex flex-wrap gap-x-3 text-xs text-neutral-500">
+          <ul className={`flex flex-wrap gap-x-3 text-xs text-neutral-500 ${soldOut ? 'opacity-50' : ''}`}>
             {optionEntries.map(([k, v]) => (
               <li key={k}>
                 {optionLabels[k] ?? k}: {k === 'frame' || k === 'gift' ? '✓' : v}
@@ -225,48 +246,69 @@ function CartLine({ item, info }: { item: CartItem; info: CartProductInfo | null
           </ul>
         )}
 
-        {/* Editor opzioni (replica `_OptionsEditor` Flutter) — disponibile
-            quando i dati prodotto sono idratati. */}
-        {info &&
-          (editingOptions ? (
-            <OptionsEditor
-              item={item}
-              info={info}
-              onClose={() => setEditingOptions(false)}
-            />
-          ) : (
+        {/* Per le righe esaurite: niente editor opzioni / stepper / nota — la
+            riga è "congelata", si può solo rimuovere. Prezzo barrato e grigio,
+            ed escluso dal subtotale (vedi `subtotal()` in lib/types/cart). */}
+        {soldOut ? (
+          <div className="mt-1 flex items-center justify-between">
             <button
               type="button"
-              onClick={() => setEditingOptions(true)}
-              className="mt-1 w-fit rounded-lg border border-brand-pink/25 px-2.5 py-1 text-xs text-brand-pink hover:border-brand-pink/50"
+              onClick={() => remove(key)}
+              className="inline-flex items-center gap-1 text-xs font-semibold text-brand-red hover:underline"
             >
-              ⚙ {t('options_edit')}
+              ✕ {t('remove')}
             </button>
-          ))}
-
-        <div className="mt-1 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => decrement(key)}
-              disabled={item.qty <= 1}
-              className="h-7 w-7 rounded-full border border-brand-pink text-brand-pink disabled:opacity-40"
-            >
-              −
-            </button>
-            <span className="w-6 text-center text-sm font-semibold">{item.qty}</span>
-            <button
-              type="button"
-              onClick={() => increment(key)}
-              className="h-7 w-7 rounded-full border border-brand-pink text-brand-pink"
-            >
-              +
-            </button>
+            <span className="text-sm font-semibold text-neutral-400 line-through">
+              {eur(lineTotal(item))}
+            </span>
           </div>
-          <span className="text-sm font-bold text-brand-red">{eur(lineTotal(item))}</span>
-        </div>
+        ) : (
+          <>
+            {/* Editor opzioni (replica `_OptionsEditor` Flutter) — disponibile
+                quando i dati prodotto sono idratati. */}
+            {info &&
+              (editingOptions ? (
+                <OptionsEditor
+                  item={item}
+                  info={info}
+                  onClose={() => setEditingOptions(false)}
+                />
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setEditingOptions(true)}
+                  className="mt-1 w-fit rounded-lg border border-brand-pink/25 px-2.5 py-1 text-xs text-brand-pink hover:border-brand-pink/50"
+                >
+                  ⚙ {t('options_edit')}
+                </button>
+              ))}
 
-        {editingNote ? (
+            <div className="mt-1 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => decrement(key)}
+                  disabled={item.qty <= 1}
+                  className="h-7 w-7 rounded-full border border-brand-pink text-brand-pink disabled:opacity-40"
+                >
+                  −
+                </button>
+                <span className="w-6 text-center text-sm font-semibold">{item.qty}</span>
+                <button
+                  type="button"
+                  onClick={() => increment(key)}
+                  className="h-7 w-7 rounded-full border border-brand-pink text-brand-pink"
+                >
+                  +
+                </button>
+              </div>
+              <span className="text-sm font-bold text-brand-red">{eur(lineTotal(item))}</span>
+            </div>
+          </>
+        )}
+
+        {!soldOut &&
+          (editingNote ? (
           <div className="mt-2">
             <textarea
               value={draft}
@@ -306,7 +348,7 @@ function CartLine({ item, info }: { item: CartItem; info: CartProductInfo | null
           >
             {item.note ? `📝 ${item.note}` : t('note_add')}
           </button>
-        )}
+          ))}
       </div>
     </li>
   );

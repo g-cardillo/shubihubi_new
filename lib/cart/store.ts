@@ -52,6 +52,15 @@ export interface CartState {
   ) => void;
   clear: () => void;
 
+  /**
+   * Riconcilia lo stato `soldOut` delle righe con i valori freschi letti da
+   * Firestore (chiavi = productId). Replica la parte sold-out di
+   * `CartController._resolveProducts` del Flutter: aggiorna SOLO il flag in
+   * memoria (niente persistenza su Firestore, come nel Flutter), così
+   * subtotale, badge e checkout usano lo stato aggiornato. No-op se nulla cambia.
+   */
+  reconcileSoldOut: (soldOutByProductId: Record<string, boolean>) => void;
+
   open: () => void;
   close: () => void;
   toggle: () => void;
@@ -178,6 +187,21 @@ export const useCartStore = create<CartState>()(
           const { mode, uid } = get();
           set({ items: [] });
           if (mode === 'user' && uid) void clearAll(uid);
+        },
+
+        reconcileSoldOut: (soldOutByProductId) => {
+          const state = get();
+          let changed = false;
+          const items = state.items.map((it) => {
+            const fresh = soldOutByProductId[it.productId];
+            if (fresh !== undefined && fresh !== it.soldOut) {
+              changed = true;
+              return { ...it, soldOut: fresh };
+            }
+            return it;
+          });
+          // Solo se qualcosa è cambiato, per non innescare render inutili.
+          if (changed) set({ items });
         },
 
         open: () => set({ isOpen: true }),

@@ -162,6 +162,31 @@ export async function adminDeleteProduct(productId: string): Promise<void> {
   await httpsCallable(functions, 'adminDeleteProduct')({ productId });
 }
 
+/**
+ * Log strutturato dell'errore di una Cloud Function onCall. Gli `HttpsError`
+ * espongono `code` (es. `functions/permission-denied`), `message` e `details`:
+ * stamparli rende immediato capire se è auth, validazione o conflitto.
+ */
+function logFunctionError(fnName: string, err: unknown): void {
+  const e = err as { code?: string; message?: string; details?: unknown };
+  console.error(`[admin] ${fnName} FAILED`, {
+    code: e.code,
+    message: e.message,
+    details: e.details,
+  });
+}
+
+/**
+ * Messaggio leggibile da un errore di Cloud Function per mostrarlo all'admin:
+ * include il codice (es. `functions/permission-denied`) così l'errore non è
+ * più "silenzioso" e la causa è immediata.
+ */
+export function functionErrorMessage(err: unknown): string {
+  const e = err as { code?: string; message?: string };
+  if (e?.message && e?.code) return `${e.message} (${e.code})`;
+  return e?.message || 'Errore sconosciuto';
+}
+
 // ── Codici sconto ────────────────────────────────────────────────────────────
 
 export async function createDiscountCode(input: {
@@ -169,12 +194,26 @@ export async function createDiscountCode(input: {
   discountPercent: number;
   minOrderAmount?: number;
 }): Promise<void> {
+  // Le onCall admin richiedono un ID token col claim `admin` FRESCO. Senza
+  // forzare il refresh il client può inviare un token stale (claim assente) →
+  // la Function risponde `permission-denied`. È lo stesso passo che fa il form
+  // prodotto (`ProductForm.submit`) prima di `adminAddProduct`.
+  await refreshIdToken();
+
   const payload: Record<string, unknown> = {
     code: input.code,
     discountPercent: input.discountPercent,
   };
   if (input.minOrderAmount != null) payload.minOrderAmount = input.minOrderAmount;
-  await httpsCallable(functions, 'adminCreateDiscountCode')(payload);
+
+  console.log('[admin] adminCreateDiscountCode →', payload);
+  try {
+    await httpsCallable(functions, 'adminCreateDiscountCode')(payload);
+    console.log('[admin] adminCreateDiscountCode OK', input.code);
+  } catch (err) {
+    logFunctionError('adminCreateDiscountCode', err);
+    throw err;
+  }
 }
 
 export async function deleteDiscountCode(codeId: string): Promise<void> {
@@ -187,10 +226,19 @@ export async function createGiftCard(input: {
   code: string;
   amountEur: number;
 }): Promise<void> {
-  await httpsCallable(functions, 'adminCreateGiftCard')({
-    code: input.code,
-    amountEur: input.amountEur,
-  });
+  // Vedi nota in createDiscountCode: serve un token fresco col claim admin.
+  await refreshIdToken();
+
+  const payload = { code: input.code, amountEur: input.amountEur };
+
+  console.log('[admin] adminCreateGiftCard →', payload);
+  try {
+    await httpsCallable(functions, 'adminCreateGiftCard')(payload);
+    console.log('[admin] adminCreateGiftCard OK', input.code);
+  } catch (err) {
+    logFunctionError('adminCreateGiftCard', err);
+    throw err;
+  }
 }
 
 export async function deleteGiftCard(codeId: string): Promise<void> {

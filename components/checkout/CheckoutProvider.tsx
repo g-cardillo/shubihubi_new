@@ -5,7 +5,6 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -130,7 +129,6 @@ export function CheckoutProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const { addEmail } = useMailingList();
   const items = useCartStore((s) => s.items);
-  const availableItems = useMemo(() => items.filter((i) => !i.soldOut), [items]);
 
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const setField = useCallback(
@@ -373,11 +371,15 @@ export function CheckoutProvider({ children }: { children: ReactNode }) {
       isGuest: !user,
     };
 
-    const lineItems = availableItems.map((it) => ({
+    // Mappa TUTTE le righe col flag `soldOut`: l'esclusione effettiva avviene
+    // in `createDraftOrder` (filtro lato repository, difesa in profondità), che
+    // rimuove i soldOut e il marker prima di chiamare la Cloud Function.
+    const lineItems = items.map((it) => ({
       productId: it.productId,
       qty: it.qty,
       // Chiavi italiane attese dal backend per ricalcolare cornice/regalo.
       options: toBackendOptions(it.options),
+      soldOut: it.soldOut,
       ...(it.note ? { note: it.note } : {}),
     }));
 
@@ -393,7 +395,7 @@ export function CheckoutProvider({ children }: { children: ReactNode }) {
       ...(discountCode ? { discountCode } : {}),
       ...(giftCardCode ? { giftCardCode } : {}),
     };
-  }, [form, user, availableItems, subtotal, discountCode, giftCardCode]);
+  }, [form, user, items, subtotal, discountCode, giftCardCode]);
 
   // ── Flusso pagamento (replica startPayment / PayBox onPressed) ──────────────
   const pay = useCallback(async () => {

@@ -60,8 +60,12 @@ function fromData(id: string, data: Record<string, unknown>): CartProductInfo {
 
 export async function fetchCartProduct(
   productId: string,
+  options?: { force?: boolean },
 ): Promise<CartProductInfo | null> {
-  if (cache.has(productId)) return cache.get(productId)!;
+  // `force`: bypassa la cache e rilegge da Firestore (usato dal reconcile dello
+  // stato soldOut, dove serve il valore fresco; un prodotto può essersi
+  // esaurito DOPO l'aggiunta al carrello). Il risultato aggiorna la cache.
+  if (!options?.force && cache.has(productId)) return cache.get(productId)!;
   const inFlight = pending.get(productId);
   if (inFlight) return inFlight;
 

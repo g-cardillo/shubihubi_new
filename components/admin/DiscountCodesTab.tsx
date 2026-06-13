@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import {
   createDiscountCode,
   deleteDiscountCode,
+  functionErrorMessage,
   streamDiscountCodes,
 } from '@/lib/admin/repository';
 import type { DiscountCodeDoc } from '@/lib/admin/types';
@@ -48,7 +49,7 @@ export function DiscountCodesTab() {
       setPercent('');
       setMinAmount('');
     } catch (e) {
-      setFormError(`Errore: ${(e as Error).message}`);
+      setFormError(`Errore: ${functionErrorMessage(e)}`);
     } finally {
       setSaving(false);
     }
@@ -72,7 +73,11 @@ export function DiscountCodesTab() {
         <Field label="Codice" width="w-44">
           <input
             value={code}
-            onChange={(e) => setCode(e.target.value.toUpperCase())}
+            onChange={(e) =>
+              // Il codice diventa l'ID documento Firestore: solo A-Z 0-9 _ -
+              // (niente '/', spazi o simboli, che lo renderebbero invalido).
+              setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, ''))
+            }
             placeholder="es. SUMMER20"
             className="admin-input uppercase"
           />

@@ -92,6 +92,8 @@
     "customer": "Customer details",
     "customs_warning": "Customs duties and import VAT are not included and will be the responsibility of the recipient upon delivery.",
     "empty": "Cart is empty",
+    "no_available": "Your cart has no available products",
+    "err_order_create": "Something went wrong while creating your order. Please try again.",
     "form_address": "Address",
     "form_address_notes": "Apt / Notes",
     "form_cap": "ZIP code",
