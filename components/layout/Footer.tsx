@@ -5,38 +5,50 @@ import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { Link, usePathname } from '@/i18n/navigation';
 import { useCookieConsent } from '@/lib/cookies/CookieConsentProvider';
+import { WaveBand } from '@/components/shared/SectionWaveBottom';
 
 /**
  * Footer del sito — replica fedele di `SiteFooterSliver.dart` del Flutter.
  *
  * Struttura identica su ogni pagina:
- *  - wave superiore (raccordo a onde col contenuto sovrastante)
+ *  - wave superiore (raccordo a onde col contenuto sovrastante; 3 onde sotto
+ *    i 900px, 6 su desktop — vedi `WaveBand`)
  *  - tre colonne: brand + dati / navigazione / contatti (5·4·5 su desktop,
  *    impilate su mobile)
  *  - barra cookie inferiore: Termini · Spedizione · Privacy · Preferenze cookie
  *
- * Variazioni per-pagina (come nel Flutter):
- *  - colore: bianco su Contatti e Supporto, altrimenti crema (#F5EBC1).
- *  - wave: assente su Home, Gallery, Live Painting, Stationery, Contatti;
- *    presente altrove. (default Flutter `showWave: true`.)
+ * Wave: la prop `wave` (default true) la mostra/nasconde. Con `wave={false}`
+ * la sezione che precede il footer deve chiudersi con `SectionWaveBottom`
+ * (stesso colore del footer) così i due restano attaccati senza stacco.
+ * L'istanza globale nel layout non può passare la prop per-pagina, quindi le
+ * pagine la cui sezione finale è scura/colorata (e ha già il proprio
+ * `SectionWaveBottom`) sono elencate in `NO_WAVE_PAGES`.
+ *
+ * Colore (come nel Flutter): bianco su Contatti e Supporto, altrimenti crema
+ * (#F5EBC1).
  */
 const INSTAGRAM = 'https://instagram.com/shubihubi';
 const EMAIL = 'info@shubihubi.com';
 const VAT = '03206180642';
 
-/** Pagine con footer bianco (Flutter: `backgroundColor: Colors.white`). */
-const WHITE_PAGES = ['/contacts', '/support'];
-/** Pagine senza wave (Flutter: `showWave: false`). */
-const NO_WAVE_PAGES = ['/', '/gallery', '/live-painting', '/stationery', '/contacts'];
+/** Pagine con footer bianco (Flutter: `backgroundColor: Colors.white`,
+ *  più Live Painting lato web). */
+const WHITE_PAGES = ['/contacts', '/support', '/live-painting'];
+/**
+ * Pagine senza wave sul footer: la sezione finale è scura/colorata e termina
+ * con `SectionWaveBottom`. Le pagine con sezione finale bianca/neutra usano
+ * il default (wave sul footer).
+ */
+const NO_WAVE_PAGES = ['/', '/live-painting', '/stationery', '/contacts'];
 
-export function Footer() {
+export function Footer({ wave = true }: { wave?: boolean }) {
   const t = useTranslations('footer');
   const tn = useTranslations('nav');
   const pathname = usePathname();
   const { openPreferences } = useCookieConsent();
 
   const isWhite = WHITE_PAGES.includes(pathname);
-  const showWave = !NO_WAVE_PAGES.includes(pathname);
+  const showWave = wave && !NO_WAVE_PAGES.includes(pathname);
   const bg = isWhite ? '#FFFFFF' : '#F5EBC1';
 
   const [copied, setCopied] = useState(false);
@@ -52,7 +64,7 @@ export function Footer() {
 
   return (
     <footer className="text-brand-redSoft">
-      {showWave && <FooterWave color={bg} />}
+      {showWave && <WaveBand color={bg} />}
 
       <div style={{ backgroundColor: bg }}>
         {/* ── Tre colonne ─────────────────────────────────────────────────── */}
@@ -172,43 +184,6 @@ function MailIcon() {
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <rect x="2.5" y="4.5" width="19" height="15" rx="2.5" stroke="currentColor" strokeWidth="1.6" />
       <path d="M3 6l9 6 9-6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-/**
- * Onda di raccordo (replica `_WavePainter`): cresta in alto (y=0), gola verso
- * il basso (88% dell'altezza), tangenti orizzontali ai vertici → curva sinusoidale
- * C1-continua. Colore = sfondo del footer; lo spazio sopra l'onda è trasparente
- * e lascia trasparire la sezione precedente.
- */
-function FooterWave({ color }: { color: string }) {
-  const W = 1200;
-  const H = 80;
-  const waves = 6;
-  const seg = W / waves;
-  const half = seg / 2;
-  const ctrl = seg * 0.25;
-  const trough = H * 0.88;
-
-  let d = 'M0,0';
-  for (let i = 0; i < waves; i++) {
-    const x = seg * i;
-    // cresta → gola
-    d += ` C${x + ctrl},0 ${x + half - ctrl},${trough} ${x + half},${trough}`;
-    // gola → cresta
-    d += ` C${x + half + ctrl},${trough} ${x + seg - ctrl},0 ${x + seg},0`;
-  }
-  d += ` L${W},${H} L0,${H} Z`;
-
-  return (
-    <svg
-      className="block h-[80px] w-full"
-      viewBox={`0 0 ${W} ${H}`}
-      preserveAspectRatio="none"
-      aria-hidden="true"
-    >
-      <path fill={color} d={d} />
     </svg>
   );
 }

@@ -3,6 +3,9 @@ import Image from 'next/image';
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import type { Locale } from '@/i18n/routing';
 import { ContactForm } from '@/components/contact/ContactForm';
+import { FaqItem } from '@/components/contact/FaqItem';
+import { SectionWaveBottom } from '@/components/shared/SectionWaveBottom';
+import { BRAND_BLUR } from '@/lib/utils/blurPlaceholder';
 
 const SUPPORT_EMAIL = 'support@shubihubi.com';
 
@@ -61,6 +64,8 @@ export default async function ContactsPage({
                 alt="Clarissa"
                 fill
                 sizes="(min-width:900px) 420px, 80vw"
+                placeholder="blur"
+                blurDataURL={BRAND_BLUR}
                 className="object-cover"
               />
             </div>
@@ -78,19 +83,7 @@ export default async function ContactsPage({
               </h2>
               <div className="border-t border-brand-pink/25">
                 {g.questions.map(([qk, ak]) => (
-                  <details key={qk} className="group border-b border-brand-pink/25">
-                    <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
-                      <span className="font-body text-[16px] font-semibold text-brand-pink desk:text-[20px]">
-                        {t(qk)}
-                      </span>
-                      <span className="shrink-0 text-brand-pink transition-transform duration-200 group-open:rotate-90">
-                        ›
-                      </span>
-                    </summary>
-                    <p className="whitespace-pre-line pb-5 pl-4 pr-8 font-body text-[15px] leading-relaxed text-brand-pinkHot desk:pl-6 desk:text-[18px]">
-                      {t(ak)}
-                    </p>
-                  </details>
+                  <FaqItem key={qk} question={t(qk)} answer={t(ak)} />
                 ))}
               </div>
             </div>
@@ -98,22 +91,26 @@ export default async function ContactsPage({
         </div>
       </section>
 
-      {/* ── 3. Banner "Non hai trovato la risposta?" ──────────────────────── */}
-      <section className="bg-brand-cream px-6 py-12">
-        <div className="mx-auto flex max-w-content flex-col items-center text-center">
-          <p className="font-body text-[16px] font-semibold leading-relaxed text-brand-pink desk:text-[20px]">
-            {t('not_found')}
-          </p>
-          <p className="mt-1.5 font-body text-[15px] leading-relaxed text-brand-pink desk:text-[18px]">
-            {t('not_found_sub')}
-          </p>
-          <a
-            href={`mailto:${SUPPORT_EMAIL}`}
-            className="mt-1 font-body text-[15px] font-bold text-brand-pink underline desk:text-[18px]"
-          >
-            {SUPPORT_EMAIL}
-          </a>
+      {/* ── 3. Banner "Non hai trovato la risposta?" — ultima sezione (crema):
+          onde in basso BIANCHE perché su /contacts il footer è bianco. ─────── */}
+      <section className="bg-brand-cream">
+        <div className="px-6 py-12">
+          <div className="mx-auto flex max-w-content flex-col items-center text-center">
+            <p className="font-body text-[16px] font-semibold leading-relaxed text-brand-pink desk:text-[20px]">
+              {t('not_found')}
+            </p>
+            <p className="mt-1.5 font-body text-[15px] leading-relaxed text-brand-pink desk:text-[18px]">
+              {t('not_found_sub')}
+            </p>
+            <a
+              href={`mailto:${SUPPORT_EMAIL}`}
+              className="mt-1 font-body text-[15px] font-bold text-brand-pink underline desk:text-[18px]"
+            >
+              {SUPPORT_EMAIL}
+            </a>
+          </div>
         </div>
+        <SectionWaveBottom color="#FFFFFF" />
       </section>
     </div>
   );

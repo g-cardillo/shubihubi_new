@@ -144,7 +144,7 @@ export function AuthPanel() {
         <button
           type="submit"
           disabled={busy}
-          className="mt-1 w-full rounded-full bg-brand-pink px-6 py-3 text-sm font-semibold text-white hover:brightness-105 disabled:opacity-50"
+          className="cta-bounce mt-1 w-full rounded-full bg-brand-pink px-6 py-3 text-sm font-semibold text-white hover:brightness-105 disabled:opacity-50"
         >
           {isSignup ? t('create_account') : t('sign_in_email')}
         </button>

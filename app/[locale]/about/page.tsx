@@ -4,6 +4,7 @@ import { setRequestLocale, getTranslations } from 'next-intl/server';
 import type { Locale } from '@/i18n/routing';
 import { Link } from '@/i18n/navigation';
 import { QuoteBand } from '@/components/shared/QuoteBand';
+import { BRAND_BLUR } from '@/lib/utils/blurPlaceholder';
 
 // Sfondo a righe verticali (replica `_AboutStripePainter`).
 const STRIPES =
@@ -68,6 +69,8 @@ export default async function AboutPage({
               fill
               quality={90}
               sizes="(min-width: 900px) 50vw, 100vw"
+              placeholder="blur"
+              blurDataURL={BRAND_BLUR}
               className="object-cover"
             />
           </div>
@@ -88,7 +91,7 @@ export default async function AboutPage({
           </p>
           <Link
             href="/contacts"
-            className="mt-8 inline-block rounded-full bg-brand-pink px-9 py-3 font-special text-[28px] text-brand-cream2 transition-all duration-200 desk:hover:-translate-y-0.5 desk:hover:shadow-lift"
+            className="cta-bounce mt-8 inline-block rounded-full bg-brand-pink px-9 py-3 font-special text-[28px] text-brand-cream2 desk:hover:shadow-lift"
           >
             {t('cta_btn')}
           </Link>
@@ -128,10 +131,11 @@ export default async function AboutPage({
         textClassName="text-brand-pinkHot"
       />
 
-      {/* ── 5. Masonry processo creativo — full-width, tile ~260px (replica
-          PinterestAssetGridSliver: maxTileWidth 260, gap 18, padding 24). ──── */}
-      <section className="px-6 py-12">
-        <div className="gap-[18px] [column-fill:_balance] [column-width:260px]">
+      {/* ── 5. Masonry processo creativo — full-bleed centrato: numero di
+          colonne fisso per breakpoint così le foto riempiono sempre tutta la
+          larghezza dello schermo, con un piccolo padding orizzontale. ──────── */}
+      <section className="px-3 py-12 desk:px-5">
+        <div className="columns-2 gap-[18px] [column-fill:_balance] tablet:columns-3 desk:columns-4 wide:columns-5">
           {MASONRY.map((src, i) => (
             <div key={src} className="mb-[18px] overflow-hidden rounded-[14px]">
               <Image
@@ -139,7 +143,9 @@ export default async function AboutPage({
                 alt={`Shubi Hubi Studio ${i + 1}`}
                 width={500}
                 height={650}
-                sizes="(min-width:900px) 18vw, 45vw"
+                sizes="(min-width:1200px) 20vw, (min-width:900px) 25vw, (min-width:700px) 33vw, 50vw"
+                placeholder="blur"
+                blurDataURL={BRAND_BLUR}
                 className="h-auto w-full"
               />
             </div>
@@ -169,6 +175,8 @@ export default async function AboutPage({
                 alt={`Reel ${i + 1}`}
                 fill
                 sizes="(min-width:900px) 22vw, 45vw"
+                placeholder="blur"
+                blurDataURL={BRAND_BLUR}
                 className="object-cover"
               />
             </a>
@@ -193,6 +201,8 @@ export default async function AboutPage({
               width={500}
               height={650}
               sizes="(min-width:900px) 22vw, 45vw"
+              placeholder="blur"
+              blurDataURL={BRAND_BLUR}
               className="h-auto w-full"
             />
           ))}

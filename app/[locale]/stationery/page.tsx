@@ -151,12 +151,14 @@ export default async function StationeryPage({
         </div>
       </section>
 
-      {/* ── 6. CONTACT CTA (riusa il testo Live Painting) ─────────────────── */}
+      {/* ── 6. CONTACT CTA (riusa il testo Live Painting) — ultima sezione:
+          onde in basso color footer, il footer sotto è senza wave. ────────── */}
       <CtaBanner
         text={tLp('cta_text')}
         btnLabel={t('section_btn')}
         href="/contacts"
         btnClassName="bg-[#FFAFEB]"
+        waveBottom
       />
     </div>
   );
@@ -193,7 +195,7 @@ function SectionText({
       </p>
       <Link
         href="/contacts"
-        className="mt-6 inline-block rounded-full bg-brand-pink px-7 py-3 font-special text-[28px] text-brand-cream2 transition-all duration-200 desk:mt-12 desk:px-[34px] desk:hover:-translate-y-0.5 desk:hover:shadow-lift"
+        className="cta-bounce mt-6 inline-block rounded-full bg-brand-pink px-7 py-3 font-special text-[28px] text-brand-cream2 desk:mt-12 desk:px-[34px] desk:hover:shadow-lift"
       >
         {btn}
       </Link>

@@ -5,6 +5,9 @@ import { Link } from '@/i18n/navigation';
 import { getLatest } from '@/lib/products/repository';
 import { ProductGrid } from '@/components/product/ProductGrid';
 import { VimeoHero } from '@/components/home/VimeoHero';
+import { SectionWaveBottom } from '@/components/shared/SectionWaveBottom';
+import { Reveal } from '@/components/shared/Reveal';
+import { BRAND_BLUR } from '@/lib/utils/blurPlaceholder';
 
 /**
  * Home page — replica fedele di `lib/features/home/presentation/pages/home.dart`.
@@ -37,6 +40,10 @@ export default async function HomePage({
       </section>
 
       {/* ── Visual Arts + logo ────────────────────────────────────────────── */}
+      {/* Le sezioni sotto l'hero entrano in viewport con fade+translateY
+          (Reveal, once) e delay progressivo 0/100/200ms. L'hero resta fuori:
+          è l'LCP ed è già visibile al primo paint. */}
+      <Reveal>
       <section className="flex flex-col items-center px-4 pb-5 pt-6 text-center desk:pb-8 desk:pt-10">
         <p className="font-title text-[40px] font-medium text-[#D60000] desk:text-[70px]">
           Visual Arts
@@ -50,8 +57,10 @@ export default async function HomePage({
           className="mt-5 h-auto w-full max-w-[500px] desk:max-w-[900px]"
         />
       </section>
+      </Reveal>
 
       {/* ── About: testo + immagine ───────────────────────────────────────── */}
+      <Reveal delay={100}>
       <section className="px-[18px] py-8 desk:px-[60px] desk:py-[70px]">
         <div className="mx-auto grid max-w-content items-center gap-[26px] desk:grid-cols-2 desk:gap-[42px]">
           <div className="flex flex-col gap-6">
@@ -79,14 +88,18 @@ export default async function HomePage({
                 alt=""
                 width={800}
                 height={890}
+                placeholder="blur"
+                blurDataURL={BRAND_BLUR}
                 className="aspect-square w-full object-cover desk:aspect-[0.9]"
               />
             </div>
           </div>
         </div>
       </section>
+      </Reveal>
 
       {/* ── Shop preview ──────────────────────────────────────────────────── */}
+      <Reveal delay={200}>
       <section className="pb-8 pt-[22px] text-center desk:pb-14 desk:pt-[38px]">
         <p className="mt-10 font-title text-[45px] text-brand-pink desk:text-[70px]">
           {t('visit_my')}
@@ -96,7 +109,7 @@ export default async function HomePage({
         </p>
         <Link
           href="/shop"
-          className="mt-2 inline-block rounded-full bg-brand-pink px-8 py-3 font-special text-[32px] text-brand-cream2 transition-all duration-200 desk:hover:-translate-y-0.5 desk:hover:shadow-pink-cta"
+          className="cta-bounce mt-2 inline-block rounded-full bg-brand-pink px-8 py-3 font-special text-[32px] text-brand-cream2 desk:hover:shadow-pink-cta"
         >
           {t('here_btn')}
         </Link>
@@ -116,8 +129,10 @@ export default async function HomePage({
           </div>
         </div>
       </section>
+      </Reveal>
 
       {/* ── Griglia 2×2: Live Painting / Stationery ───────────────────────── */}
+      <Reveal>
       <section className="grid desk:grid-cols-2">
         <ImageTile src="/home/home1.webp" />
         <TextTile
@@ -135,14 +150,18 @@ export default async function HomePage({
         />
         <ImageTile src="/home/home2.webp" />
       </section>
+      </Reveal>
 
       {/* ── Gallery CTA fullwidth + bordo a onde ──────────────────────────── */}
+      <Reveal delay={100}>
       <section className="relative h-[520px] w-full overflow-hidden desk:h-[760px]">
         <Image
           src="/home/home4.webp"
           alt=""
           fill
           sizes="100vw"
+          placeholder="blur"
+          blurDataURL={BRAND_BLUR}
           className="object-cover"
         />
         <div className="absolute inset-0 bg-black/[0.24]" />
@@ -155,12 +174,15 @@ export default async function HomePage({
           </p>
           <Link
             href="/gallery"
-            className="mt-5 inline-block rounded-full bg-brand-pink px-8 py-3 font-special text-[32px] text-brand-cream2 transition-all duration-200 desk:hover:-translate-y-0.5 desk:hover:shadow-pink-cta"
+            className="cta-bounce mt-5 inline-block rounded-full bg-brand-pink px-8 py-3 font-special text-[32px] text-brand-cream2 desk:hover:shadow-pink-cta"
           >
             {t('here_btn')}
           </Link>
         </div>
+        {/* Bordo a onde color footer: la foto è scura, il footer è senza wave. */}
+        <SectionWaveBottom className="absolute inset-x-0 bottom-0" />
       </section>
+      </Reveal>
     </>
   );
 }
@@ -168,7 +190,15 @@ export default async function HomePage({
 function ImageTile({ src }: { src: string }) {
   return (
     <div className="relative aspect-[1.77]">
-      <Image src={src} alt="" fill sizes="(min-width:900px) 50vw, 100vw" className="object-cover" />
+      <Image
+        src={src}
+        alt=""
+        fill
+        sizes="(min-width:900px) 50vw, 100vw"
+        placeholder="blur"
+        blurDataURL={BRAND_BLUR}
+        className="object-cover"
+      />
     </div>
   );
 }
@@ -198,7 +228,7 @@ function TextTile({
       </p>
       <Link
         href={href}
-        className="mt-3 inline-block w-fit rounded-full bg-brand-pink px-7 py-3 font-special text-[24px] text-brand-cream2 transition-all duration-200 desk:mt-8 desk:text-[30px] desk:hover:-translate-y-0.5 desk:hover:shadow-pink-cta"
+        className="cta-bounce mt-3 inline-block w-fit rounded-full bg-brand-pink px-7 py-3 font-special text-[24px] text-brand-cream2 desk:mt-8 desk:text-[30px] desk:hover:shadow-pink-cta"
       >
         {cta}
       </Link>

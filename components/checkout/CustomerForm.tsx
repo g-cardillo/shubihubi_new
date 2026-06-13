@@ -39,7 +39,7 @@ export function CustomerForm() {
             <button
               type="button"
               onClick={c.applyProfileAddress}
-              className="mt-2 rounded-full bg-brand-pink px-4 py-1.5 text-xs font-semibold text-white hover:brightness-105"
+              className="cta-bounce mt-2 rounded-full bg-brand-pink px-4 py-1.5 text-xs font-semibold text-white hover:brightness-105"
             >
               {t('profile_addr_apply')}
             </button>

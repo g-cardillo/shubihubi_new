@@ -173,7 +173,7 @@ function GoShopButton({ label }: { label: string }) {
   return (
     <Link
       href="/shop"
-      className="mt-9 inline-flex h-[52px] w-full items-center justify-center rounded-full bg-brand-pink px-6 text-base font-semibold text-white hover:brightness-105"
+      className="cta-bounce mt-9 inline-flex h-[52px] w-full items-center justify-center rounded-full bg-brand-pink px-6 text-base font-semibold text-white hover:brightness-105"
     >
       {label}
     </Link>

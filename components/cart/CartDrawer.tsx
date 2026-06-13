@@ -14,6 +14,7 @@ import {
   MIN_ORDER_AMOUNT,
 } from '@/lib/types/cart';
 import { fetchCartProduct, type CartProductInfo } from '@/lib/cart/products';
+import { BRAND_BLUR } from '@/lib/utils/blurPlaceholder';
 import { framePriceFor, giftPriceFor } from '@/lib/cart/options';
 import { ITALY_FREE_THRESHOLD } from '@/lib/checkout/shipping';
 
@@ -136,7 +137,7 @@ export function CartDrawer() {
                 <Link
                   href="/checkout"
                   onClick={close}
-                  className="mt-4 block w-full rounded-full bg-brand-pink px-6 py-3 text-center font-special text-lg text-brand-cream2 transition hover:brightness-105"
+                  className="cta-bounce mt-4 block w-full rounded-full bg-brand-pink px-6 py-3 text-center font-special text-lg text-brand-cream2 hover:brightness-105"
                 >
                   {t('checkout_btn')}
                 </Link>
@@ -186,7 +187,15 @@ function CartLine({ item, info }: { item: CartItem; info: CartProductInfo | null
     <li className="flex gap-3 py-4">
       <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-[10px] bg-black/[0.06]">
         {imageSrc && (
-          <Image src={imageSrc} alt={item.title} fill sizes="80px" className="object-cover" />
+          <Image
+            src={imageSrc}
+            alt={item.title}
+            fill
+            sizes="80px"
+            placeholder="blur"
+            blurDataURL={BRAND_BLUR}
+            className="object-cover"
+          />
         )}
       </div>
 

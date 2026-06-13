@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import { BRAND_BLUR } from '@/lib/utils/blurPlaceholder';
 
 /**
  * Galleria immagini prodotto (design system Shubihubi): immagine principale su
@@ -37,6 +38,8 @@ export function ProductGallery({
             fill
             priority
             sizes="(max-width: 1024px) 100vw, 50vw"
+            placeholder="blur"
+            blurDataURL={BRAND_BLUR}
             className="object-cover"
           />
         ) : (

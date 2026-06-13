@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { useLocale, useTranslations } from 'next-intl';
 import { getIdTokenResult, onAuthStateChanged } from 'firebase/auth';
@@ -88,6 +88,18 @@ export function Navbar() {
   const hydrated = useCartStore((s) => s.hydrated);
   const count = useCartStore((s) => totalQty(s.items));
 
+  // Pop del badge carrello quando la quantità AUMENTA: incrementare la key
+  // rimonta lo span e fa ripartire l'animazione `badge-pop`. Il baseline parte
+  // dopo l'idratazione da localStorage, così il primo render non "poppa".
+  const prevCount = useRef<number | null>(null);
+  const [popKey, setPopKey] = useState(0);
+  useEffect(() => {
+    if (!hydrated) return;
+    const prev = prevCount.current;
+    prevCount.current = count;
+    if (prev !== null && count > prev) setPopKey((k) => k + 1);
+  }, [hydrated, count]);
+
   // Modalità navbar in base alla rotta + progressione di scroll [0..1].
   const mode = navModeFor(pathname);
   const overlay = mode !== 'solid';
@@ -158,12 +170,15 @@ export function Navbar() {
           {menuOpen ? <CloseGlyph /> : <MenuGlyph />}
         </button>
 
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2" aria-label="Shubihubi">
+        {/* Logo — all'hover (solo desktop) blob e wordmark oscillano ±5°,
+            2 cicli, con il testo in ritardo di 100ms (vedi .logo-hover). */}
+        <Link href="/" className="logo-hover flex items-center gap-2" aria-label="Shubihubi">
           <span className="relative block h-8 w-8 overflow-hidden rounded-full">
-            <Image src="/logo.webp" alt="Shubihubi" fill sizes="32px" className="object-cover" priority />
+            <Image src="/logo.webp" alt="Shubihubi" fill sizes="32px" className="logo-blob object-cover" priority />
           </span>
-          <span className="font-special text-xl text-brand-pink">Shubihubi</span>
+          <span className="logo-blob logo-blob-delayed inline-block font-special text-xl text-brand-pink">
+            Shubihubi
+          </span>
         </Link>
 
         <div className="flex-1" />
@@ -226,7 +241,12 @@ export function Navbar() {
           >
             <IconCart className="h-[22px] w-[22px]" />
             {hydrated && count > 0 && (
-              <span className="absolute right-0 top-0 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-brand-pink px-1 text-[11px] font-extrabold text-white">
+              <span
+                key={popKey}
+                className={`absolute right-0 top-0 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-brand-pink px-1 text-[11px] font-extrabold text-white ${
+                  popKey > 0 ? 'badge-pop' : ''
+                }`}
+              >
                 {count}
               </span>
             )}

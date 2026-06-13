@@ -67,4 +67,158 @@ body {
   .admin-input {
     @apply ui-input;
   }
+
+  /* ── Micro-animazioni (vedi anche la regola prefers-reduced-motion in coda) ─ */
+
+  /* Bounce hover dei bottoni CTA pill rosa: spring 180ms, solo desktop con
+     mouse. La transition resta fuori dalla media query così il rilascio
+     dell'hover è morbido anche a cavallo del breakpoint. */
+  .cta-bounce {
+    transition:
+      transform 180ms cubic-bezier(0.34, 1.56, 0.64, 1),
+      box-shadow 180ms cubic-bezier(0.34, 1.56, 0.64, 1),
+      filter 180ms ease;
+  }
+  @media (hover: hover) and (min-width: 900px) {
+    .cta-bounce:hover:not(:disabled) {
+      transform: translateY(-2px) scale(1.03);
+    }
+  }
+
+  /* Skeleton con shimmer (gradiente che scorre da sinistra a destra). */
+  .skeleton-shimmer {
+    background: linear-gradient(90deg, #f5f5f7 25%, #e8e8e8 50%, #f5f5f7 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s linear infinite;
+  }
+
+  /* Fade-in delle card prodotto; il delay incrementale è inline per-card. */
+  .card-in {
+    animation: card-in 300ms ease-out both;
+  }
+
+  /* Effetto profondità griglia: card hovered 1.02, adiacenti 0.97. */
+  @media (hover: hover) and (min-width: 900px) {
+    .grid-depth > li {
+      transition: transform 200ms ease;
+    }
+    .grid-depth > li:hover {
+      transform: scale(1.02);
+    }
+    .grid-depth > li:hover + li,
+    .grid-depth > li:has(+ li:hover) {
+      transform: scale(0.97);
+    }
+  }
+
+  /* Chip filtri attivi: entrata fade+scale 200ms, uscita 150ms. */
+  .chip-in {
+    animation: chip-in 200ms ease-out both;
+  }
+  .chip-out {
+    animation: chip-out 150ms ease-in forwards;
+  }
+
+  /* Badge carrello: pop 1 → 1.4 → 1 quando la quantità aumenta. */
+  .badge-pop {
+    animation: badge-pop 300ms ease-in-out;
+  }
+
+  /* Scroll reveal: nascosto solo per chi accetta il motion, così senza JS o
+     con reduced-motion il contenuto resta sempre visibile. */
+  .reveal {
+    transition:
+      opacity 500ms ease-out,
+      transform 500ms ease-out;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal:not(.reveal-in) {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+  }
+
+  /* Logo navbar: oscillazione del blob (2 cicli) all'hover, solo desktop.
+     Il testo "Shubihubi" segue con 100ms di delay. */
+  @media (hover: hover) and (min-width: 900px) {
+    .logo-hover:hover .logo-blob {
+      animation: logo-wobble 600ms ease-in-out 2;
+    }
+    .logo-hover:hover .logo-blob-delayed {
+      animation-delay: 100ms;
+    }
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+@keyframes card-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes chip-in {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes chip-out {
+  to {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+
+@keyframes badge-pop {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.4);
+  }
+}
+
+@keyframes logo-wobble {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-5deg);
+  }
+  75% {
+    transform: rotate(5deg);
+  }
+}
+
+/* prefers-reduced-motion: spegne TUTTE le animazioni e transizioni del sito.
+   Unica eccezione: lo shimmer degli skeleton placeholder (affordance di
+   caricamento, non motion decorativo). */
+@media (prefers-reduced-motion: reduce) {
+  *:not(.skeleton-shimmer),
+  *:not(.skeleton-shimmer)::before,
+  *:not(.skeleton-shimmer)::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

@@ -378,7 +378,7 @@ export function ShopBrowser({
             <button
               type="button"
               onClick={() => setPanelOpen(false)}
-              className="rounded-full bg-brand-pink px-5 py-2 text-sm font-semibold text-white hover:brightness-105"
+              className="cta-bounce rounded-full bg-brand-pink px-5 py-2 text-sm font-semibold text-white hover:brightness-105"
             >
               {t('closeFilters')}
             </button>
@@ -390,20 +390,12 @@ export function ShopBrowser({
       {state.filters.length > 0 && (
         <div className="mb-5 flex flex-wrap gap-2">
           {state.filters.map((v) => (
-            <span
+            <ActiveChip
               key={norm(v)}
-              className="inline-flex items-center gap-1.5 rounded-full bg-brand-pink/10 px-3 py-1.5 text-sm text-ink"
-            >
-              {v}
-              <button
-                type="button"
-                onClick={() => toggleFilter(v)}
-                aria-label={t('removeFilter', { filter: v })}
-                className="text-ink/45 transition hover:text-brand-pink"
-              >
-                ✕
-              </button>
-            </span>
+              label={v}
+              removeLabel={t('removeFilter', { filter: v })}
+              onRemove={() => toggleFilter(v)}
+            />
           ))}
         </div>
       )}
@@ -411,9 +403,17 @@ export function ShopBrowser({
       {shown.length === 0 ? (
         <p className="py-16 text-center text-sm text-neutral-500">{t('empty')}</p>
       ) : (
-        <ul className="grid grid-cols-2 gap-x-4 gap-y-8 desk:grid-cols-5 desk:gap-x-[18px]">
-          {shown.map((c) => (
-            <li key={c.id}>{c.node}</li>
+        // `grid-depth` = profondità su hover; `card-in` con delay incrementale
+        // (50ms, cap 400ms) — i nodi esistenti non ri-animano (key stabile).
+        <ul className="grid-depth grid grid-cols-2 gap-x-4 gap-y-8 desk:grid-cols-5 desk:gap-x-[18px]">
+          {shown.map((c, i) => (
+            <li
+              key={c.id}
+              className="card-in"
+              style={{ animationDelay: `${Math.min(i * 50, 400)}ms` }}
+            >
+              {c.node}
+            </li>
           ))}
         </ul>
       )}
@@ -421,6 +421,49 @@ export function ShopBrowser({
       {/* Sentinel per lo scroll infinito. */}
       {hasMore && <div ref={sentinelRef} aria-hidden className="h-px w-full" />}
     </>
+  );
+}
+
+/** Durata dell'animazione di uscita delle chip (deve combaciare con il CSS). */
+const CHIP_OUT_MS = 150;
+
+/**
+ * Chip di un filtro attivo: entra con fade+scale (`chip-in`); al click sulla ✕
+ * gioca l'animazione di uscita (`chip-out`) e POI rimuove il filtro.
+ */
+function ActiveChip({
+  label,
+  removeLabel,
+  onRemove,
+}: {
+  label: string;
+  removeLabel: string;
+  onRemove: () => void;
+}) {
+  const [leaving, setLeaving] = useState(false);
+
+  function handleRemove() {
+    if (leaving) return;
+    setLeaving(true);
+    window.setTimeout(onRemove, CHIP_OUT_MS);
+  }
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full bg-brand-pink/10 px-3 py-1.5 text-sm text-ink ${
+        leaving ? 'chip-out' : 'chip-in'
+      }`}
+    >
+      {label}
+      <button
+        type="button"
+        onClick={handleRemove}
+        aria-label={removeLabel}
+        className="text-ink/45 transition hover:text-brand-pink"
+      >
+        ✕
+      </button>
+    </span>
   );
 }
 

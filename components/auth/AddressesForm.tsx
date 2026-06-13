@@ -82,7 +82,7 @@ export function AddressesForm() {
         <button
           type="submit"
           disabled={saving}
-          className="rounded-full bg-brand-pink px-6 py-3 text-sm font-semibold text-white hover:brightness-105 disabled:opacity-50"
+          className="cta-bounce rounded-full bg-brand-pink px-6 py-3 text-sm font-semibold text-white hover:brightness-105 disabled:opacity-50"
         >
           {t('save')}
         </button>

@@ -516,7 +516,7 @@ export function ProductForm({
                 <button
                   type="button"
                   onClick={publish}
-                  className="rounded-full bg-brand-pink px-6 py-2.5 text-sm font-semibold text-white hover:brightness-105"
+                  className="cta-bounce rounded-full bg-brand-pink px-6 py-2.5 text-sm font-semibold text-white hover:brightness-105"
                 >
                   Pubblica e aggiorna sito
                 </button>
@@ -537,7 +537,7 @@ export function ProductForm({
               type="button"
               onClick={submit}
               disabled={isLoading}
-              className="rounded-full bg-brand-pink px-8 py-3 text-sm font-semibold text-white hover:brightness-105 disabled:opacity-60"
+              className="cta-bounce rounded-full bg-brand-pink px-8 py-3 text-sm font-semibold text-white hover:brightness-105 disabled:opacity-60"
             >
               {isLoading ? '…' : editingProductId == null ? 'Aggiungi prodotto' : 'Salva modifiche'}
             </button>

@@ -7,6 +7,7 @@ import { LpTestimonials, type LpReview } from '@/components/live-painting/LpTest
 import { WhySection } from '@/components/shared/WhySection';
 import { CtaBanner } from '@/components/shared/CtaBanner';
 import { StarburstBadge } from '@/components/shared/StarburstBadge';
+import { SectionWaveBottom } from '@/components/shared/SectionWaveBottom';
 
 export async function generateMetadata({
   params,
@@ -157,28 +158,32 @@ export default async function LivePaintingPage({
         <LpTestimonials title={t('reviews_title')} reviews={reviews} />
       </section>
 
-      {/* ── 7. BOMBONIERE A DISTANZA ──────────────────────────────────────── */}
-      <section className="bg-[#FFF3BC] px-6 py-12 desk:px-[60px] desk:py-20">
-        <div className="mx-auto max-w-content text-center">
-          <h2 className="font-title text-[38px] leading-tight text-brand-red desk:text-[72px]">
-            {t('bomboniere_title')}
-          </h2>
-          <p className="mx-auto mt-3 max-w-3xl font-body text-[15px] font-medium leading-relaxed text-brand-red desk:mt-5 desk:text-xl">
-            {t('bomboniere_subtitle')}
-          </p>
-          <div className="mt-8 grid gap-9 desk:mt-[52px] desk:grid-cols-2 desk:gap-[60px]">
-            <BomboniereColumn
-              desc={t('bomboniere_shop_desc')}
-              btn={t('bomboniere_shop_btn')}
-              href="/shop"
-            />
-            <BomboniereColumn
-              desc={t('bomboniere_contact_desc')}
-              btn={t('bomboniere_contact_btn')}
-              href="/contacts"
-            />
+      {/* ── 7. BOMBONIERE A DISTANZA — ultima sezione (gialla): onde in basso
+          BIANCHE perché su /live-painting il footer è bianco (e senza wave). ── */}
+      <section className="bg-[#FFF3BC]">
+        <div className="px-6 py-12 desk:px-[60px] desk:py-20">
+          <div className="mx-auto max-w-content text-center">
+            <h2 className="font-title text-[38px] leading-tight text-brand-red desk:text-[72px]">
+              {t('bomboniere_title')}
+            </h2>
+            <p className="mx-auto mt-3 max-w-3xl font-body text-[15px] font-medium leading-relaxed text-brand-red desk:mt-5 desk:text-xl">
+              {t('bomboniere_subtitle')}
+            </p>
+            <div className="mt-8 grid gap-9 desk:mt-[52px] desk:grid-cols-2 desk:gap-[60px]">
+              <BomboniereColumn
+                desc={t('bomboniere_shop_desc')}
+                btn={t('bomboniere_shop_btn')}
+                href="/shop"
+              />
+              <BomboniereColumn
+                desc={t('bomboniere_contact_desc')}
+                btn={t('bomboniere_contact_btn')}
+                href="/contacts"
+              />
+            </div>
           </div>
         </div>
+        <SectionWaveBottom color="#FFFFFF" />
       </section>
     </div>
   );
@@ -215,7 +220,7 @@ function AboutText({
       </p>
       <Link
         href="/contacts"
-        className="mt-6 inline-block rounded-full bg-brand-pink px-7 py-3 font-special text-[28px] text-brand-cream2 transition-all duration-200 desk:mt-9 desk:px-[34px] desk:hover:-translate-y-0.5 desk:hover:shadow-lift"
+        className="cta-bounce mt-6 inline-block rounded-full bg-brand-pink px-7 py-3 font-special text-[28px] text-brand-cream2 desk:mt-9 desk:px-[34px] desk:hover:shadow-lift"
       >
         {cta}
       </Link>

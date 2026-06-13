@@ -246,7 +246,7 @@ export function ProductDetail({
           type="button"
           disabled={product.isSoldOut}
           onClick={handleAddToCart}
-          className="mt-1 flex items-center justify-between gap-4 rounded-full bg-brand-pink px-6 py-4 transition-all duration-200 enabled:desk:hover:-translate-y-0.5 enabled:desk:hover:shadow-pink-cta disabled:cursor-not-allowed disabled:opacity-60"
+          className="cta-bounce mt-1 flex items-center justify-between gap-4 rounded-full bg-brand-pink px-6 py-4 enabled:desk:hover:shadow-pink-cta disabled:cursor-not-allowed disabled:opacity-60"
         >
           <span className="font-special text-[28px] leading-none text-brand-cream2">
             {product.isSoldOut ? t('badge.soldOut') : t('addToCart')}

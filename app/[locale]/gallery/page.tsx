@@ -5,6 +5,7 @@ import type { Locale } from '@/i18n/routing';
 import { Link } from '@/i18n/navigation';
 import { QuoteBand } from '@/components/shared/QuoteBand';
 import { LpTestimonials, type LpReview } from '@/components/live-painting/LpTestimonials';
+import { BRAND_BLUR } from '@/lib/utils/blurPlaceholder';
 
 // Masonry: immagini gallery migrate da assets/gallery → public/gallery.
 const MASONRY = Array.from({ length: 24 }, (_, i) => `/gallery/galleria-${25 + i}.webp`);
@@ -82,7 +83,15 @@ export default async function GalleryPage({
         <div className="grid grid-cols-2 gap-3.5 p-3.5">
           {['evento-3', 'coordinato-4', 'evento-4', 'evento-2'].map((n) => (
             <div key={n} className="relative aspect-square overflow-hidden rounded-[14px]">
-              <Image src={`/gallery/${n}.webp`} alt="" fill sizes="25vw" className="object-cover" />
+              <Image
+                src={`/gallery/${n}.webp`}
+                alt=""
+                fill
+                sizes="25vw"
+                placeholder="blur"
+                blurDataURL={BRAND_BLUR}
+                className="object-cover"
+              />
             </div>
           ))}
         </div>
@@ -107,6 +116,8 @@ export default async function GalleryPage({
                 width={500}
                 height={650}
                 sizes="(min-width:900px) 18vw, 45vw"
+                placeholder="blur"
+                blurDataURL={BRAND_BLUR}
                 className="h-auto w-full"
               />
             </div>
@@ -142,6 +153,8 @@ export default async function GalleryPage({
                 alt=""
                 fill
                 sizes="82vw"
+                placeholder="blur"
+                blurDataURL={BRAND_BLUR}
                 className="object-cover"
               />
             </div>
@@ -158,6 +171,8 @@ export default async function GalleryPage({
                         alt=""
                         fill
                         sizes="36vw"
+                        placeholder="blur"
+                        blurDataURL={BRAND_BLUR}
                         className="object-cover"
                       />
                     </div>
@@ -231,7 +246,15 @@ export default async function GalleryPage({
       {/* ── 12. Radisson (foto + ovale sovrapposto) ───────────────────────── */}
       <section className="grid bg-white desk:grid-cols-[2fr_3fr] desk:items-stretch">
         <div className="relative h-[380px] desk:h-auto">
-          <Image src="/gallery/evento-11.webp" alt="" fill sizes="40vw" className="object-cover" />
+          <Image
+            src="/gallery/evento-11.webp"
+            alt=""
+            fill
+            sizes="40vw"
+            placeholder="blur"
+            blurDataURL={BRAND_BLUR}
+            className="object-cover"
+          />
           {/* Ovale che scavalca il bordo destro */}
           <div className="absolute right-[-18%] top-1/2 hidden w-[55%] -translate-y-1/2 desk:block">
             <Oval src="/gallery/evento-12.webp" className="w-full" ratio="aspect-[1/1.3]" />
@@ -270,7 +293,7 @@ export default async function GalleryPage({
             </div>
             <Link
               href="/about"
-              className="mt-6 inline-block rounded-full bg-brand-pink px-9 py-3 font-special text-[22px] text-brand-cream2 transition-all duration-200 desk:mt-7 desk:text-[28px] desk:hover:-translate-y-0.5 desk:hover:shadow-lift"
+              className="cta-bounce mt-6 inline-block rounded-full bg-brand-pink px-9 py-3 font-special text-[22px] text-brand-cream2 desk:mt-7 desk:text-[28px] desk:hover:shadow-lift"
             >
               {t('read_more')}
             </Link>
@@ -324,7 +347,15 @@ function Body({ children }: { children: React.ReactNode }) {
 function Pic({ src, className = '' }: { src: string; className?: string }) {
   return (
     <div className={`relative w-full ${className}`}>
-      <Image src={src} alt="" fill sizes="(min-width:900px) 50vw, 100vw" className="object-cover" />
+      <Image
+        src={src}
+        alt=""
+        fill
+        sizes="(min-width:900px) 50vw, 100vw"
+        placeholder="blur"
+        blurDataURL={BRAND_BLUR}
+        className="object-cover"
+      />
     </div>
   );
 }
@@ -342,7 +373,15 @@ function Oval({
   return (
     <div className={`rounded-full bg-white p-1.5 ${className}`}>
       <div className={`relative ${ratio} overflow-hidden rounded-full`}>
-        <Image src={src} alt="" fill sizes="320px" className="object-cover" />
+        <Image
+          src={src}
+          alt=""
+          fill
+          sizes="320px"
+          placeholder="blur"
+          blurDataURL={BRAND_BLUR}
+          className="object-cover"
+        />
       </div>
     </div>
   );

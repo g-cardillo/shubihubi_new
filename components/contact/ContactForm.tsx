@@ -229,7 +229,7 @@ export function ContactForm() {
       <button
         type="submit"
         disabled={sending}
-        className="mt-4 w-full rounded-full bg-brand-pink py-3.5 font-special text-[28px] text-brand-cream2 transition-all duration-200 enabled:desk:hover:-translate-y-0.5 enabled:desk:hover:shadow-pink-cta disabled:opacity-70"
+        className="cta-bounce mt-4 w-full rounded-full bg-brand-pink py-3.5 font-special text-[28px] text-brand-cream2 enabled:desk:hover:shadow-pink-cta disabled:opacity-70"
       >
         {sending ? '…' : t('form_submit')}
       </button>

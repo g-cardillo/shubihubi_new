@@ -44,6 +44,35 @@ export function CategoryBar({
   // Tipo dell'ultimo pointer sul bottone macro: distingue tap touch da click mouse.
   const lastPointer = useRef<string>('mouse');
 
+  // ── Indicatore attivo scorrevole ───────────────────────────────────────────
+  // Un'unica barretta rosa (#EE67AB) assoluta dentro la <ul> che trasla
+  // (translateX + width) sul tab attivo con transizione 300ms.
+  const tabRefs = useRef(new Map<string, HTMLButtonElement>());
+  const [indicator, setIndicator] = useState<{ x: number; w: number } | null>(null);
+
+  const registerTab = useCallback(
+    (value: string) => (el: HTMLButtonElement | null) => {
+      if (el) tabRefs.current.set(value, el);
+      else tabRefs.current.delete(value);
+    },
+    [],
+  );
+
+  const measureIndicator = useCallback(() => {
+    const btn = tabRefs.current.get(activeMacro);
+    // offsetParent dei bottoni = la <ul> (relative), quindi offsetLeft è già
+    // nello spazio di coordinate dell'indicatore.
+    setIndicator(btn ? { x: btn.offsetLeft, w: btn.offsetWidth } : null);
+  }, [activeMacro]);
+
+  useEffect(() => {
+    measureIndicator();
+    window.addEventListener('resize', measureIndicator);
+    // Ri-misura quando i webfont arrivano (cambiano la larghezza dei tab).
+    document.fonts?.ready.then(measureIndicator).catch(() => {});
+    return () => window.removeEventListener('resize', measureIndicator);
+  }, [measureIndicator]);
+
   const cancelClose = useCallback(() => {
     if (closeTimer.current != null) {
       window.clearTimeout(closeTimer.current);
@@ -81,9 +110,20 @@ export function CategoryBar({
   return (
     <div className="relative" onMouseEnter={cancelClose} onMouseLeave={scheduleClose}>
       <nav aria-label={allLabel} className="overflow-x-auto border-b border-black/10">
-        <ul className="flex w-max gap-7 px-1">
+        <ul className="relative flex w-max gap-7 px-1">
+          {/* Indicatore attivo: scorre tra i tab (300ms ease). */}
+          <span
+            aria-hidden
+            className="absolute bottom-0 left-0 h-0.5 rounded-full bg-brand-pink transition-[transform,width] duration-300 ease-out"
+            style={{
+              width: indicator?.w ?? 0,
+              transform: `translateX(${indicator?.x ?? 0}px)`,
+              opacity: indicator ? 1 : 0,
+            }}
+          />
           <li>
             <TabButton
+              buttonRef={registerTab('')}
               isActive={activeMacro === ''}
               onClick={() => {
                 onSelectMacro('');
@@ -108,6 +148,7 @@ export function CategoryBar({
                 }}
               >
                 <TabButton
+                  buttonRef={registerTab(m.value)}
                   isActive={isActive}
                   ariaExpanded={hasMenu ? open === m.value : undefined}
                   ariaHasPopup={hasMenu || undefined}
@@ -162,6 +203,7 @@ export function CategoryBar({
 }
 
 function TabButton({
+  buttonRef,
   isActive,
   onClick,
   onPointerDown,
@@ -170,6 +212,7 @@ function TabButton({
   ariaHasPopup,
   children,
 }: {
+  buttonRef?: (el: HTMLButtonElement | null) => void;
   isActive: boolean;
   onClick: () => void;
   onPointerDown?: (pointerType: string) => void;
@@ -178,8 +221,11 @@ function TabButton({
   ariaHasPopup?: boolean;
   children: React.ReactNode;
 }) {
+  // L'underline attiva è disegnata dall'indicatore scorrevole nella <ul>;
+  // il border-b trasparente resta solo per mantenere identico il layout.
   return (
     <button
+      ref={buttonRef}
       type="button"
       onClick={onClick}
       onPointerDown={onPointerDown ? (e) => onPointerDown(e.pointerType) : undefined}
@@ -187,10 +233,8 @@ function TabButton({
       aria-current={isActive ? 'page' : undefined}
       aria-expanded={ariaExpanded}
       aria-haspopup={ariaHasPopup ? 'menu' : undefined}
-      className={`relative -mb-px whitespace-nowrap border-b-2 pb-3 pt-1 text-sm font-medium transition-colors ${
-        isActive
-          ? 'border-brand-pink text-ink'
-          : 'border-transparent text-ink/55 hover:text-ink'
+      className={`relative -mb-px whitespace-nowrap border-b-2 border-transparent pb-3 pt-1 text-sm font-medium transition-colors ${
+        isActive ? 'text-ink' : 'text-ink/55 hover:text-ink'
       }`}
     >
       {children}

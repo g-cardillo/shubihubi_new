@@ -4,6 +4,7 @@ import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import type { Product } from '@/lib/types/product';
 import { productTitle } from '@/lib/i18n/localized';
+import { BRAND_BLUR } from '@/lib/utils/blurPlaceholder';
 import { ProductBadges } from './ProductBadges';
 import { ProductPrice } from './ProductPrice';
 
@@ -51,6 +52,8 @@ export async function ProductCard({
               fill
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
               priority={priority}
+              placeholder="blur"
+              blurDataURL={BRAND_BLUR}
               className={`object-cover transition-all duration-200 ${
                 hover ? 'desk:group-hover:scale-[1.03] desk:group-hover:opacity-0' : ''
               }`}
