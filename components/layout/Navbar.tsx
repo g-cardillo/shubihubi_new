@@ -178,7 +178,7 @@ export function Navbar() {
             <Image src="/logo.webp" alt="Shubihubi" fill sizes="32px" className="logo-blob object-cover" priority />
           </span>
           <span className="logo-blob logo-blob-delayed inline-block font-special text-xl text-brand-pink">
-            Shubihubi
+            Shubi hubi
           </span>
         </Link>
 
